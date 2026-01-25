@@ -1,0 +1,62 @@
+<!doctype html>
+<html>
+<body>
+    <style>
+    body { font-family: system-ui, Arial; margin: 16px}
+    label { display:block; margin-top: 12px; font-weight: 600; }
+    input, textarea, select, button { width: 100%; padding: 10px; font-size: 14px; }
+    textarea { min-height: 90px; }
+    button { margin-top: 14px; cursor: pointer; }
+    .hint { color:#555; font-size: 13px; }
+  </style>
+
+  <label>Mode</label>
+  <select id="mode">
+    <option value="team">Team roster</option>
+    <!-- enable once one-day is wired -->
+    <!-- <option value="one-day">One-Day roster</option> -->
+  </select>
+
+  <label>Team Name</label>
+  <input id="team_name" placeholder="Exact team name from Teams tab" />
+
+  <label>Borrowed Players (comma-separated)</label>
+  <textarea id="borrowed" placeholder="Optional: Jane Smith, John Doe"></textarea>
+  <div class="hint">Tip: leave blank if none.</div>
+
+  <button id="go">Generate PDF</button>
+
+  <script>
+    document.getElementById('go').addEventListener('click', async () => {
+      const mode = document.getElementById('mode').value;
+      const team_name = document.getElementById('team_name').value.trim();
+      const borrowed = document.getElementById('borrowed').value.trim();
+
+      const payload = { mode, team_name, borrowed };
+
+      const res = await fetch('/api/roster', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+
+      if (!res.ok) {
+        const txt = await res.text();
+        alert(`Error: ${txt}`);
+        return;
+      }
+
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = (team_name || 'Roster') + '_Roster.pdf';
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+    });
+  </script>
+</body>
+</html>

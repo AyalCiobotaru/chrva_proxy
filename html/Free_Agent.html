@@ -1,0 +1,236 @@
+<link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.min.css">
+<link rel="stylesheet" href="https://cdn.datatables.net/responsive/2.5.0/css/responsive.dataTables.min.css">
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+<script src="https://cdn.datatables.net/responsive/2.5.0/js/dataTables.responsive.min.js"></script>
+
+<!-- Loading Spinner -->
+<div id="loading" style="display:flex; justify-content:center; align-items:center; height:100px; flex-direction:column;">
+  <div class="spinner" style="
+    border: 6px solid #f3f3f3;
+    border-top: 6px solid #0052a5;
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    animation: spin 1s linear infinite;
+  "></div>
+  <div style="margin-top:10px; font-weight:bold; color:#0052a5;">Loading...</div>
+</div>
+<div id="filterNotice" style="
+  display:none;
+  margin: 8px 0 4px 0;
+  padding: 8px 12px;
+  border-left: 4px solid #0052a5;
+  background:#f0f4f9;
+  font-size: 0.95em;
+  color:#0f2a44;
+">
+
+<div style="overflow-x:auto; max-width:100%; margin:0 auto;">
+  <table id="chrvaTable" class="display nowrap" style="width:100%; opacity:0; transition:opacity 0.8s ease; font-size:1.1em;">
+    <thead><tr></tr></thead>
+  </table>
+</div>
+
+<style>
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+#chrvaTable {
+  padding-top: 10px !important;
+}
+
+/* Header styling */
+#chrvaTable thead {
+  display: table-header-group !important;
+}
+#chrvaTable thead th {
+  background-color: #a0001e !important; /* CHRVA red */
+  color: #fff !important;
+  font-weight: bold !important;
+  text-align: center !important;
+  padding: 8px !important;
+  border-bottom: 2px solid #fff !important;
+}
+
+/* Dropdown (responsive details) styling */
+table.dataTable.dtr-inline.collapsed > tbody > tr.parent > td.control:before {
+  background-color: #0052a5 !important; /* CHRVA blue for arrow */
+}
+.dtr-details {
+  background-color: #f0f4f9 !important;
+  padding: 8px 12px;
+  border-left: 3px solid #0052a5;
+  margin-top: 5px;
+  font-size: 0.95em;
+  color: #333;
+}
+.dtr-details p {
+  margin: 4px 0;
+}
+</style>
+<script>
+  // Helper: get URL param
+  const getParam = (name) => new URLSearchParams(window.location.search).get(name);
+
+  // Helper: normalize strings so "Frightful Fours" ≈ "frightful_fours"
+  const normalize = (s) =>
+    (s || "")
+      .toString()
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, "_")
+      .replace(/^_+|_+$/g, "");
+
+  // Helper: make tokens pretty for display: "frightful_fours" -> "Frightful Fours"
+  const humanize = (s) =>
+    (s || "")
+      .toString()
+      .replace(/[_-]+/g, " ")
+      .replace(/\b\w/g, (c) => c.toUpperCase());
+
+  // Display-friendly timestamp
+  const formatTimestamp = (isoString) => {
+    if (!isoString) return "Not Provided";
+    const date = new Date(isoString);
+    return date.toLocaleString("en-US", {
+      month: "long",
+      day: "numeric",
+      year: "numeric",
+      hour: "numeric",
+      minute: "2-digit",
+      hour12: true,
+    });
+  };
+
+  fetch("https://chrva-proxy.vercel.app/api/free-agents", { credentials: "include" })
+    .then((res) => res.json())
+    .then((rawData) => {
+      if (!Array.isArray(rawData) || rawData.length === 0) {
+        throw new Error("No data returned");
+      }
+
+      const TOURNAMENT_COL_LABEL = "Which Tournaments are you available for?";
+      const keys = Object.keys(rawData[0]);
+      const tournamentKey =
+        keys.find((k) => k.trim() === TOURNAMENT_COL_LABEL) ||
+        keys.find((k) => normalize(k) === normalize(TOURNAMENT_COL_LABEL));
+
+      const timestampKey = "Timestamp";
+      const eventParam = getParam("event"); // e.g. ?event=frightful_fours
+
+      // If an event is present, show a small header/notice above the table
+      if (eventParam) {
+        const notice = document.getElementById("filterNotice");
+        if (notice) {
+          const pretty = humanize(eventParam);
+          notice.innerHTML = `
+            <strong>Filtered:</strong> Showing free agents available for <strong>${pretty}</strong>.
+            <a href="./free-agents" style="margin-left:10px; text-decoration:underline;">Clear filter</a>
+          `;
+          notice.style.display = "block";
+        }
+      }
+
+      // Filter data if event param exists
+      let data = rawData;
+      if (eventParam && tournamentKey) {
+        const target = normalize(eventParam);
+        data = rawData.filter((row) => normalize(row[tournamentKey]).includes(target));
+      }
+
+      // No matches after filtering
+      if (!data.length) {
+        document.getElementById("loading").innerHTML =
+          '<span style="color:#0052a5;font-weight:bold;">No matching free agents for this event yet.</span>';
+        return;
+      }
+
+      // Build column definitions — show/hide tournamentKey based on event param
+      const columns = [
+        {
+          className: "control",
+          title: "",
+          orderable: false,
+          sortable: false,
+          data: null,
+          defaultContent: "",
+          responsivePriority: 1,
+        },
+        ...keys
+          .filter((k) => k !== timestampKey)
+          .map((k) => ({
+            title: k,
+            data: k,
+            visible: !(eventParam && k === tournamentKey), // hide tournament column only if filtering
+            responsivePriority: k === "Name" ? 1 : 2,
+          })),
+        {
+          title: timestampKey,
+          data: timestampKey,
+          visible: true,
+          render: (d) => formatTimestamp(d),
+        },
+      ];
+
+      // Build header row to match visible columns
+      const theadRow = document.querySelector("#chrvaTable thead tr");
+      theadRow.innerHTML = "";
+      columns.forEach((col) => {
+        if (col.visible !== false) {
+          const th = document.createElement("th");
+          th.textContent = col.title || "";
+          theadRow.appendChild(th);
+        }
+      });
+
+      // Initialize DataTable
+      $('#chrvaTable').DataTable({
+        data,
+        columns,
+        paging: true,
+        searching: true,
+        ordering: true,
+        responsive: {
+          details: {
+            type: "column",
+            target: "td.control",
+            renderer: function (api, rowIdx, cols) {
+              return (
+                cols
+                  .filter((c) => c.hidden)
+                  .map(
+                    (c) =>
+                      `<p><strong>${c.title}:</strong> ${
+                        (c.data !== undefined && c.data !== null && c.data !== "")
+                          ? c.data
+                          : "Not Provided"
+                      }</p>`
+                  )
+                  .join("") || "No additional info"
+              );
+            },
+          },
+        },
+        scrollX: false,
+        autoWidth: false,
+        language: {
+          emptyTable: eventParam
+            ? "No free agents match the selected event."
+            : "No data available.",
+        },
+      });
+
+      // Hide spinner and fade in table
+      document.getElementById("loading").style.display = "none";
+      const table = document.getElementById("chrvaTable");
+      table.style.display = "table";
+      setTimeout(() => (table.style.opacity = "1"), 50);
+    })
+    .catch((err) => {
+      document.getElementById("loading").innerHTML =
+        '<span style="color:red;">Failed to load data.</span>';
+      console.error("Error loading data:", err);
+    });
+</script>
