@@ -4,6 +4,7 @@ from http.server import BaseHTTPRequestHandler
 
 from lib.roster_core import (
     build_field_values_for_team,
+    build_field_values_for_one_day,
     fill_pdf_to_bytes,
     get_template_pdf_bytes,
 )
@@ -25,19 +26,33 @@ class handler(BaseHTTPRequestHandler):
             data = json.loads(body.decode("utf-8") or "{}")
 
             mode = (data.get("mode") or "team").strip().lower()
-            if mode != "team":
-                raise ValueError("Only mode='team' is wired right now (one-day can be added next).")
-
-            team_name = (data.get("team_name") or "").strip()
-            if not team_name:
-                raise ValueError("team_name is required for mode='team'")
-
             template_bytes = get_template_pdf_bytes()
 
-            values = build_field_values_for_team(
-                team_name,
-                borrowed_csv=data.get("borrowed"),
-            )
+            if mode == "team":
+                team_name = (data.get("team_name") or "").strip()
+                if not team_name:
+                    raise ValueError("team_name is required for mode='team'")
+
+                values = build_field_values_for_team(
+                    team_name,
+                    borrowed_csv=data.get("borrowed"),
+                )
+
+            elif mode == "one-day":
+                team_name = (data.get("team_name") or "").strip() or "One-Day Team"
+                players_csv = (data.get("players") or "").strip()
+                if not players_csv:
+                    raise ValueError("players is required for mode='one-day'")
+
+                values = build_field_values_for_one_day(
+                    roster_label=team_name,
+                    names_csv=players_csv,
+                    borrowed_csv=data.get("borrowed"),
+                )
+
+            else:
+                raise ValueError("mode must be 'team' or 'one-day'")
+
             pdf_bytes = fill_pdf_to_bytes(template_bytes, values)
 
             resolved = str(values.get("team_name", team_name)).strip()
