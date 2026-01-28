@@ -24,7 +24,7 @@
   background:#f0f4f9;
   font-size: 0.95em;
   color:#0f2a44;
-">
+"></div>
 
 <div style="overflow-x:auto; max-width:100%; margin:0 auto;">
   <table id="chrvaTable" class="display nowrap" style="width:100%; opacity:0; transition:opacity 0.8s ease; font-size:1.1em;">
@@ -72,25 +72,36 @@ table.dataTable.dtr-inline.collapsed > tbody > tr.parent > td.control:before {
 }
 </style>
 <script>
-  // Helper: get URL param
+  // --- URL param
   const getParam = (name) => new URLSearchParams(window.location.search).get(name);
 
-  // Helper: normalize strings so "Frightful Fours" ≈ "frightful_fours"
+  // --- Normalization helpers
+  // Maps "women's" -> "womens", "men's" -> "mens" so tokens align with URL style.
   const normalize = (s) =>
     (s || "")
       .toString()
+      .replace(/women['’]s/gi, "womens")
+      .replace(/men['’]s/gi, "mens")
       .toLowerCase()
       .replace(/[^a-z0-9]+/g, "_")
       .replace(/^_+|_+$/g, "");
 
-  // Helper: make tokens pretty for display: "frightful_fours" -> "Frightful Fours"
   const humanize = (s) =>
-    (s || "")
-      .toString()
-      .replace(/[_-]+/g, " ")
-      .replace(/\b\w/g, (c) => c.toUpperCase());
+    (s || "").toString().replace(/[_-]+/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
 
-  // Display-friendly timestamp
+// Parse gender out of event token. Returns 'men' | 'women' | null
+const parseGenderFromToken = (token) => {
+  const t = normalize(token || "");
+  if (/(?:^|[_-])mens?$/i.test(t)) return "men";
+  if (/(?:^|[_-])womens?$/i.test(t)) return "women";
+  return null;
+};
+
+  // Remove trailing _mens/_womens (or -mens/-womens) to get the base event token
+  const stripGenderFromToken = (token) =>
+  (token || "").toString().replace(/[_-]?(?:mens?|women?s?)$/i, "");
+
+  // Timestamp display
   const formatTimestamp = (isoString) => {
     if (!isoString) return "Not Provided";
     const date = new Date(isoString);
@@ -102,6 +113,61 @@ table.dataTable.dtr-inline.collapsed > tbody > tr.parent > td.control:before {
       minute: "2-digit",
       hour12: true,
     });
+  };
+
+  // Split multi-entry tournament cells:
+  // e.g., "Sat, Nov 29th - Men's 6s Volley Banquet Bash @ NLCC, Sun, Nov 30th - Women's 6s Volley Banquet Bash @ NLCC"
+  const splitTournamentItems = (val) => {
+    if (!val) return [];
+    return val
+      .split(/(?=(?:Sun|Mon|Tue|Wed|Thu|Fri|Sat),\s)/) // positive lookahead before weekday
+      .map((s) => s.trim())
+      .filter(Boolean);
+  };
+
+  // Detect gender within a single line (supports Men’s/Men's, Women’s/Women's)
+  const detectItemGender = (s) => {
+    if (!s) return null;
+    if (/\bmen['’]?s\b/i.test(s)) return "men";
+    if (/\bwom(?:e|a)n['’]?s\b/i.test(s)) return "women";
+    return null;
+  };
+
+  // Does a tournament line match the base event token? (check RHS after " - ")
+  const itemMatchesEvent = (item, baseEventToken) => {
+    if (!baseEventToken) return true;
+    const parts = item.split(" - ");
+    const rhs = parts[1] || item; // e.g., "Women's 6s Volley Banquet Bash @ North Laurel..."
+    const rhsToken = normalize(rhs);
+    return rhsToken.includes(normalize(baseEventToken));
+  };
+
+  // Keep the subset of lines that match event + gender (if provided)
+  const filterTournamentItemsForEvent = (val, baseEventToken, gender) => {
+    const items = splitTournamentItems(val);
+    return items.filter((it) => {
+      if (!itemMatchesEvent(it, baseEventToken)) return false;
+      if (!gender) return true;
+      const g = detectItemGender(it);
+      return g === gender;
+    });
+  };
+
+  // Render tournaments as multi-line HTML (optionally filtered by event+gender)
+  const renderTournamentList = (val, type, baseEventToken = null, gender = null) => {
+    const items = baseEventToken || gender
+      ? filterTournamentItemsForEvent(val, baseEventToken, gender)
+      : splitTournamentItems(val);
+
+    if (!items.length) return type === "display" ? "Not Provided" : "";
+
+    if (type === "display") {
+      return items.map((x) => `<div>${x}</div>`).join("");
+    }
+    if (type === "filter" || type === "sort") {
+      return items.join(" | ");
+    }
+    return val;
   };
 
   fetch("https://chrva-proxy.vercel.app/api/free-agents", { credentials: "include" })
@@ -118,36 +184,66 @@ table.dataTable.dtr-inline.collapsed > tbody > tr.parent > td.control:before {
         keys.find((k) => normalize(k) === normalize(TOURNAMENT_COL_LABEL));
 
       const timestampKey = "Timestamp";
-      const eventParam = getParam("event"); // e.g. ?event=frightful_fours
+      const eventParam = getParam("event"); // e.g. "volley_banquet_bash_womens"
+      const genderFilter = parseGenderFromToken(eventParam); // 'women'
+      const baseEventToken = eventParam ? stripGenderFromToken(eventParam) : null; // "volley_banquet_bash"
 
-      // If an event is present, show a small header/notice above the table
+      // Filter notice
       if (eventParam) {
         const notice = document.getElementById("filterNotice");
         if (notice) {
-          const pretty = humanize(eventParam);
+          const prettyEvent = humanize(baseEventToken);
+          const prettyGender = genderFilter ? ` (${genderFilter === "men" ? "Men’s" : "Women’s"})` : "";
           notice.innerHTML = `
-            <strong>Filtered:</strong> Showing free agents available for <strong>${pretty}</strong>.
+            <strong>Filtered:</strong> Showing free agents available for <strong>${prettyEvent}${prettyGender}</strong>.
             <a href="./free-agents" style="margin-left:10px; text-decoration:underline;">Clear filter</a>
           `;
           notice.style.display = "block";
         }
       }
 
-      // Filter data if event param exists
+      // Row-level filtering: keep rows that have at least one matching line
       let data = rawData;
       if (eventParam && tournamentKey) {
-        const target = normalize(eventParam);
-        data = rawData.filter((row) => normalize(row[tournamentKey]).includes(target));
+        data = rawData.filter((row) => {
+          const matches = filterTournamentItemsForEvent(row[tournamentKey], baseEventToken, genderFilter);
+          return matches.length > 0;
+        });
       }
 
-      // No matches after filtering
       if (!data.length) {
         document.getElementById("loading").innerHTML =
           '<span style="color:#0052a5;font-weight:bold;">No matching free agents for this event yet.</span>';
         return;
       }
 
-      // Build column definitions — show/hide tournamentKey based on event param
+      // Build base columns (excluding timestamp + tournament for now)
+      const baseDataCols = keys
+        .filter((k) => k !== timestampKey && k !== tournamentKey)
+        .map((k) => ({
+          title: k,
+          data: k,
+          responsivePriority: k === "Name" ? 1 : 2,
+        }));
+
+      // Timestamp column
+      const timestampCol = {
+        title: timestampKey,
+        data: timestampKey,
+        visible: true,
+        render: (d) => formatTimestamp(d),
+      };
+
+      // Tournament column LAST; visible only when NOT filtering (but included in responsive dropdown when hidden)
+      const tournamentCol = tournamentKey
+        ? {
+            title: tournamentKey,
+            data: tournamentKey,
+            visible: !eventParam, // hide when filter is active
+            render: (data, type) => renderTournamentList(data, type, baseEventToken, genderFilter),
+          }
+        : null;
+
       const columns = [
         {
           className: "control",
@@ -158,23 +254,12 @@ table.dataTable.dtr-inline.collapsed > tbody > tr.parent > td.control:before {
           defaultContent: "",
           responsivePriority: 1,
         },
-        ...keys
-          .filter((k) => k !== timestampKey)
-          .map((k) => ({
-            title: k,
-            data: k,
-            visible: !(eventParam && k === tournamentKey), // hide tournament column only if filtering
-            responsivePriority: k === "Name" ? 1 : 2,
-          })),
-        {
-          title: timestampKey,
-          data: timestampKey,
-          visible: true,
-          render: (d) => formatTimestamp(d),
-        },
+        ...baseDataCols,
+        timestampCol,
+        ...(tournamentCol ? [tournamentCol] : []), // ensure LAST position
       ];
 
-      // Build header row to match visible columns
+      // Build table header to match visible columns
       const theadRow = document.querySelector("#chrvaTable thead tr");
       theadRow.innerHTML = "";
       columns.forEach((col) => {
@@ -185,7 +270,14 @@ table.dataTable.dtr-inline.collapsed > tbody > tr.parent > td.control:before {
         }
       });
 
-      // Initialize DataTable
+      // Hide Preferred Position columns 
+      if (genderFilter) {
+        columns.forEach(col => {
+          if (col.title && /Preferred Fours Position/i.test(col.title)) col.visible = false;
+        });
+      }
+
+      // Init DataTable
       $('#chrvaTable').DataTable({
         data,
         columns,
@@ -197,15 +289,14 @@ table.dataTable.dtr-inline.collapsed > tbody > tr.parent > td.control:before {
             type: "column",
             target: "td.control",
             renderer: function (api, rowIdx, cols) {
+              // Use the rendered values so tournament lines show split/matching-only
               return (
                 cols
                   .filter((c) => c.hidden)
                   .map(
                     (c) =>
                       `<p><strong>${c.title}:</strong> ${
-                        (c.data !== undefined && c.data !== null && c.data !== "")
-                          ? c.data
-                          : "Not Provided"
+                        (c.data !== undefined && c.data !== null && c.data !== "") ? c.data : "Not Provided"
                       }</p>`
                   )
                   .join("") || "No additional info"
@@ -222,7 +313,7 @@ table.dataTable.dtr-inline.collapsed > tbody > tr.parent > td.control:before {
         },
       });
 
-      // Hide spinner and fade in table
+      // Hide spinner and fade in
       document.getElementById("loading").style.display = "none";
       const table = document.getElementById("chrvaTable");
       table.style.display = "table";
@@ -234,3 +325,4 @@ table.dataTable.dtr-inline.collapsed > tbody > tr.parent > td.control:before {
       console.error("Error loading data:", err);
     });
 </script>
+

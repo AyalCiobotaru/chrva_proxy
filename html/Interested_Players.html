@@ -1,0 +1,159 @@
+<link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.min.css">
+<link rel="stylesheet" href="https://cdn.datatables.net/responsive/2.5.0/css/responsive.dataTables.min.css">
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+<script src="https://cdn.datatables.net/responsive/2.5.0/js/dataTables.responsive.min.js"></script>
+
+<!-- Loading Spinner -->
+<div id="loading" style="display:flex; justify-content:center; align-items:center; height:100px; flex-direction:column;">
+  <div class="spinner" style="
+    border: 6px solid #f3f3f3;
+    border-top: 6px solid #0052a5;
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    animation: spin 1s linear infinite;
+  "></div>
+  <div style="margin-top:10px; font-weight:bold; color:#0052a5;">Loading...</div>
+</div>
+
+<div style="overflow-x:auto; max-width:100%; margin:0 auto;">
+  <table id="chrvaTable" class="display nowrap" style="width:100%; opacity:0; transition:opacity 0.8s ease; font-size:1.1em;">
+    <thead><tr></tr></thead>
+  </table>
+</div>
+
+<style>
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+#chrvaTable {
+  padding-top: 10px !important;
+}
+
+/* Header styling */
+#chrvaTable thead {
+  display: table-header-group !important;
+}
+#chrvaTable thead th {
+  background-color: #a0001e !important; /* CHRVA red */
+  color: #fff !important;
+  font-weight: bold !important;
+  text-align: center !important;
+  padding: 8px !important;
+  border-bottom: 2px solid #fff !important;
+}
+
+/* Dropdown (responsive details) styling */
+table.dataTable.dtr-inline.collapsed > tbody > tr.parent > td.control:before {
+  background-color: #0052a5 !important; /* CHRVA blue for arrow */
+}
+.dtr-details {
+  background-color: #f0f4f9 !important;
+  padding: 8px 12px;
+  border-left: 3px solid #0052a5;
+  margin-top: 5px;
+  font-size: 0.95em;
+  color: #333;
+}
+.dtr-details p {
+  margin: 4px 0;
+}
+</style>
+
+<script>
+fetch("https://chrva-proxy.vercel.app/api/chrva", {
+  credentials: 'include'
+})
+  .then(res => res.json())
+  .then(data => {
+    const keys = Object.keys(data[0]);
+    const timestampKey = "Timestamp";
+
+    // Format timestamp for display
+    const formatTimestamp = (isoString) => {
+      if (!isoString) return "Not Provided";
+      const date = new Date(isoString);
+      return date.toLocaleString("en-US", {
+        month: "long",
+        day: "numeric",
+        year: "numeric",
+        hour: "numeric",
+        minute: "2-digit",
+        hour12: true
+      });
+    };
+
+    // Build column definitions
+    const columns = [
+      {
+        className: 'control',
+        title: '',
+        orderable: false,
+        sortable: false,
+        data: null,
+        defaultContent: '',
+        responsivePriority: 1
+      },
+      ...keys
+        .filter(k => k !== timestampKey) // exclude hidden
+        .map(k => ({
+          title: k,
+          data: k,
+          responsivePriority: k === "Name" ? 1 : 2
+        })),
+      {
+        title: timestampKey,
+        data: timestampKey,
+        visible: true,
+        render: (data) => formatTimestamp(data)
+      },
+    ];
+
+    // Build header row dynamically
+    const theadRow = document.querySelector('#chrvaTable thead tr');
+    theadRow.innerHTML = '';
+    columns.forEach(col => {
+      if (col.title && col.visible !== false) {
+        const th = document.createElement('th');
+        th.textContent = col.title;
+        theadRow.appendChild(th);
+      }
+    });
+
+    $('#chrvaTable').DataTable({
+      data,
+      columns,
+      paging: true,
+      searching: true,
+      ordering: true,
+      responsive: {
+        details: {
+          type: 'column',
+          target: 'td.control',
+          renderer: function (api, rowIdx, cols) {
+            // Show all hidden fields nicely formatted
+            return cols
+              .filter(c => c.hidden)
+              .map(c => `<p><strong>${c.title}:</strong> ${c.data || "Not Provided"}</p>`)
+              .join('') || 'No additional info';
+          }
+        }
+      },
+      scrollX: false,
+      autoWidth: false
+    });
+
+    // Hide spinner and fade in table
+    document.getElementById('loading').style.display = 'none';
+    const table = document.getElementById('chrvaTable');
+    table.style.display = 'table';
+    setTimeout(() => table.style.opacity = '1', 50);
+  })
+  .catch(err => {
+    document.getElementById('loading').innerHTML = '<span style="color:red;">Failed to load data.</span>';
+    console.error('Error loading data:', err);
+  });
+</script>
