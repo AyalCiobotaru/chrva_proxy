@@ -64,9 +64,15 @@
 
     <!-- TEAM MODE -->
     <div id="rg_team_section" style="margin-top:14px;">
-      <label style="display:block; font-weight:700; color:#0f2a44; margin-bottom:6px;">Team Name</label>
-      <input id="rg_team_name" type="text" placeholder="e.g. Dat Ace Doe"
+      <label style="display:block; font-weight:700; color:#0f2a44; margin-bottom:6px;">Team Name(s)</label>
+      <input id="rg_team_name" type="text" placeholder="e.g. Dat Ace Doe, Tips & Guac, Spyke X Family"
         style="width:100%; padding:10px; border:1px solid #cfd8e3; border-radius:8px;" />
+
+      <!-- ZIP toggle (used when multiple teams are entered) -->
+      <label style="display:flex; gap:10px; align-items:center; margin-top:10px; color:#0f2a44;">
+        <input type="checkbox" id="rg_zip" checked />
+        Download as a single ZIP when multiple teams are entered
+      </label>
 
       <label style="display:block; font-weight:700; color:#0f2a44; margin:12px 0 6px;">Borrowed Players (optional)</label>
       <textarea id="rg_borrowed" placeholder="Comma-separated names, e.g. John Doe, Jane Smith"
@@ -77,7 +83,7 @@
       </div>
     </div>
 
-    <!-- ONE-DAY MODE (hidden until you enable API + option) -->
+    <!-- ONE-DAY MODE -->
     <div id="rg_oneday_section" style="display:none; margin-top:14px;">
       <label style="display:block; font-weight:700; color:#0f2a44; margin-bottom:6px;">One-Day Team Name</label>
       <input id="rg_oneday_name" type="text" placeholder="e.g. Frostbite Fill-Ins"
@@ -130,7 +136,8 @@
 
 <script>
   // ====== CONFIG ======
-  const ROSTER_ENDPOINT = "https://chrva-proxy.vercel.app/api/roster";
+  const ROSTER_ENDPOINT = "https://chrva-proxy.vercel.app/api/roster";    // single PDF
+  const ROSTERS_ZIP_ENDPOINT = "https://chrva-proxy.vercel.app/api/rosters"; // ZIP of multiple PDFs
 
   // ====== DOM ======
   const modeEl = document.getElementById("rg_mode");
@@ -142,6 +149,8 @@
 
   const onedayNameEl = document.getElementById("rg_oneday_name");
   const onedayPlayersEl = document.getElementById("rg_oneday_players");
+
+  const zipEl = document.getElementById("rg_zip");
 
   const btn = document.getElementById("rg_generate");
   const loading = document.getElementById("rg_loading");
@@ -173,6 +182,14 @@
       .replace(/\s+/g, "_");
   }
 
+  function parseTeams(raw) {
+    return (raw || "")
+      .split(",")
+      .map(s => s.trim())
+      .filter(Boolean)
+      .filter((v, i, arr) => arr.indexOf(v) === i);
+  }
+
   // Toggle sections by mode
   modeEl.addEventListener("change", () => {
     clearMsg();
@@ -186,7 +203,7 @@
     }
   });
 
-  // Trigger PDF download from blob
+  // Trigger file download from blob
   function downloadBlob(blob, filename) {
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
@@ -203,27 +220,47 @@
 
     const mode = modeEl.value;
 
-    // Build payload
+    // Build payload + select endpoint
     let payload = {};
     let displayName = "";
+    let endpoint = ROSTER_ENDPOINT;
 
     if (mode === "team") {
-      const teamName = (teamNameEl.value || "").trim();
+      const rawTeam = (teamNameEl.value || "").trim();
       const borrowed = (borrowedEl.value || "").trim();
+      const teams = parseTeams(rawTeam);
 
-      if (!teamName) {
-        showMsg("<strong>Please enter a Team Name.</strong>", true);
+      if (!teams.length) {
+        showMsg("<strong>Please enter at least one Team Name.</strong>", true);
         return;
       }
 
-      payload = { mode: "team", team_name: teamName };
-      if (borrowed) payload.borrowed = borrowed;
+      const zipChecked = zipEl ? zipEl.checked : true;
 
-      displayName = teamName;
+      // Multiple teams + zip enabled => ZIP endpoint
+      if (teams.length > 1 && zipChecked) {
+        payload = { mode: "team", team_names: teams };
+        if (borrowed) payload.borrowed = borrowed;
+
+        displayName = "Rosters";
+        endpoint = ROSTERS_ZIP_ENDPOINT;
+
+      } else {
+        // Single team (or zip disabled) => single PDF endpoint
+        payload = { mode: "team", team_name: teams[0] };
+        if (borrowed) payload.borrowed = borrowed;
+
+        displayName = teams[0];
+        endpoint = ROSTER_ENDPOINT;
+      }
 
     } else {
+      // one-day mode (single PDF only)
       const oneDayName = (onedayNameEl.value || "").trim() || "One-Day Team";
       const players = (onedayPlayersEl.value || "").trim();
+
+      // NOTE: borrowed players input lives in team section UI.
+      // If you want borrowed in one-day mode too, move the textarea outside sections.
       const borrowed = (borrowedEl.value || "").trim();
 
       if (!players) {
@@ -235,21 +272,20 @@
       if (borrowed) payload.borrowed = borrowed;
 
       displayName = oneDayName;
+      endpoint = ROSTER_ENDPOINT;
     }
 
     setBusy(true);
     showMsg("Contacting roster service…");
 
     try {
-      const res = await fetch(ROSTER_ENDPOINT, {
+      const res = await fetch(endpoint, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        // credentials include isn't needed unless you set cookies on Vercel
         body: JSON.stringify(payload),
       });
 
       if (!res.ok) {
-        // Try to parse JSON error
         let errText = await res.text();
         try {
           const j = JSON.parse(errText);
@@ -260,12 +296,18 @@
 
       const blob = await res.blob();
 
-      // Prefer filename from Content-Disposition header if present
+      // Determine filename
+      const ct = (res.headers.get("content-type") || "").toLowerCase();
+      const isZip = ct.includes("zip");
+
       const cd = res.headers.get("content-disposition") || "";
       const match = cd.match(/filename="([^"]+)"/i);
-      const filename = match ? match[1] : (safeFileName(displayName) + "_Roster.pdf");
 
-      showMsg(`<strong>Success!</strong> Your roster PDF should download automatically.`);
+      const filename = match
+        ? match[1]
+        : (isZip ? "Rosters.zip" : (safeFileName(displayName) + "_Roster.pdf"));
+
+      showMsg(`<strong>Success!</strong> Your file should download automatically.`);
       downloadBlob(blob, filename);
 
     } catch (err) {
