@@ -5,6 +5,7 @@
     { "source": "/api/free-agents", "destination": "/api/free-agent.js" },
 
     { "source": "/api/roster", "destination": "/api/roster.py" },
-    { "source": "/api/rosters", "destination": "/api/rosters.py" }
+    { "source": "/api/rosters", "destination": "/api/rosters.py" },
+    { "source": "/api/teams", "destination": "/api/teams.py" }
   ]
 }

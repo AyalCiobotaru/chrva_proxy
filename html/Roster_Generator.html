@@ -68,6 +68,40 @@
       <input id="rg_team_name" type="text" placeholder="e.g. Dat Ace Doe, Tips & Guac, Spyke X Family"
         style="width:100%; padding:10px; border:1px solid #cfd8e3; border-radius:8px;" />
 
+      <!-- Team picker (loads from Teams tab) -->
+      <div style="margin-top:10px; padding:10px; border:1px solid #e3e8ef; border-radius:10px; background:#fafcff;">
+        <div style="display:flex; gap:10px; flex-wrap:wrap; align-items:center;">
+          <button type="button" id="rg_load_teams" style="
+            padding: 8px 10px; border:1px solid #cfd8e3; border-radius:8px; background:#fff; cursor:pointer;
+            font-weight:700; color:#0f2a44;
+          ">Load Teams</button>
+
+          <input id="rg_team_filter" type="text" placeholder="Search teams..."
+            style="flex:1; min-width: 180px; padding:8px 10px; border:1px solid #cfd8e3; border-radius:8px;" />
+
+          <button type="button" id="rg_apply_selected" style="
+            padding: 8px 10px; border:none; border-radius:8px; background:#0052a5; color:#fff; cursor:pointer;
+            font-weight:800;
+          ">Use selected</button>
+        </div>
+
+        <div id="rg_team_picker" style="
+          margin-top:10px;
+          max-height: 220px;
+          overflow:auto;
+          border:1px solid #e3e8ef;
+          border-radius:10px;
+          padding:10px;
+          background:#fff;
+        ">
+          <div style="color:#556b85; font-size:0.95em;">
+            Click <b>Load Teams</b> to populate this list.
+          </div>
+        </div>
+
+        <div id="rg_selected_count" style="margin-top:8px; color:#445b76; font-size:0.92em;"></div>
+      </div>
+
       <!-- ZIP toggle (used when multiple teams are entered) -->
       <label style="display:flex; gap:10px; align-items:center; margin-top:10px; color:#0f2a44;">
         <input type="checkbox" id="rg_zip" checked />
@@ -92,6 +126,10 @@
       <label style="display:block; font-weight:700; color:#0f2a44; margin:12px 0 6px;">Players (comma-separated)</label>
       <textarea id="rg_oneday_players" placeholder="e.g. John Doe, Jane Smith, Ciobotaru, Ayal"
         style="width:100%; min-height:110px; padding:10px; border:1px solid #cfd8e3; border-radius:8px;"></textarea>
+
+      <div style="margin-top:8px; font-size:0.92em; color:#445b76;">
+        Note: Borrowed Players input is in Team mode. If you want it here too, I can duplicate/move it.
+      </div>
     </div>
 
     <button id="rg_generate" style="
@@ -136,8 +174,9 @@
 
 <script>
   // ====== CONFIG ======
-  const ROSTER_ENDPOINT = "https://chrva-proxy.vercel.app/api/roster";    // single PDF
-  const ROSTERS_ZIP_ENDPOINT = "https://chrva-proxy.vercel.app/api/rosters"; // ZIP of multiple PDFs
+  const ROSTER_ENDPOINT = "https://chrva-proxy.vercel.app/api/roster";        // single PDF
+  const ROSTERS_ZIP_ENDPOINT = "https://chrva-proxy.vercel.app/api/rosters";  // ZIP of multiple PDFs
+  const TEAMS_ENDPOINT = "https://chrva-proxy.vercel.app/api/teams";          // JSON list of team names
 
   // ====== DOM ======
   const modeEl = document.getElementById("rg_mode");
@@ -155,6 +194,16 @@
   const btn = document.getElementById("rg_generate");
   const loading = document.getElementById("rg_loading");
   const msg = document.getElementById("rg_msg");
+
+  // Team picker elements
+  const loadTeamsBtn = document.getElementById("rg_load_teams");
+  const teamFilterEl = document.getElementById("rg_team_filter");
+  const teamPickerEl = document.getElementById("rg_team_picker");
+  const applySelectedBtn = document.getElementById("rg_apply_selected");
+  const selectedCountEl = document.getElementById("rg_selected_count");
+
+  // Team list cache
+  let ALL_TEAMS = [];
 
   function showMsg(html, isError=false) {
     msg.style.display = "block";
@@ -215,6 +264,100 @@
     setTimeout(() => URL.revokeObjectURL(url), 5000);
   }
 
+  // ====== TEAM PICKER ======
+  function renderTeamPicker(filterText = "") {
+    const q = (filterText || "").toLowerCase().trim();
+    const selected = new Set(parseTeams(teamNameEl.value || "").map(t => t.toLowerCase()));
+
+    const filtered = !q ? ALL_TEAMS : ALL_TEAMS.filter(t => t.toLowerCase().includes(q));
+
+    if (!ALL_TEAMS.length) {
+      teamPickerEl.innerHTML = `<div style="color:#556b85;">No teams loaded yet.</div>`;
+      selectedCountEl.textContent = "";
+      return;
+    }
+
+    if (!filtered.length) {
+      teamPickerEl.innerHTML = `<div style="color:#556b85;">No matches.</div>`;
+      selectedCountEl.textContent = `Selected: ${selected.size}`;
+      return;
+    }
+
+    teamPickerEl.innerHTML = filtered.map(team => {
+      const checked = selected.has(team.toLowerCase()) ? "checked" : "";
+      const escaped = team.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+      return `
+        <label style="display:flex; gap:10px; align-items:center; padding:6px 2px; border-bottom:1px solid #f2f5fa;">
+          <input type="checkbox" data-team="${escaped}" ${checked} />
+          <span style="color:#0f2a44;">${escaped}</span>
+        </label>
+      `;
+    }).join("");
+
+    selectedCountEl.textContent = `Selected: ${selected.size}`;
+  }
+
+  function getCheckedTeamsFromPicker() {
+    const inputs = teamPickerEl.querySelectorAll('input[type="checkbox"][data-team]');
+    const teams = [];
+    inputs.forEach(cb => {
+      if (cb.checked) teams.push(cb.getAttribute("data-team"));
+    });
+    // data-team is HTML-escaped above, but attribute will return the decoded string in practice.
+    // Still, normalize via trim:
+    return teams.map(t => (t || "").trim()).filter(Boolean);
+  }
+
+  async function loadTeams() {
+    setBusy(true);
+    showMsg("Loading teams…");
+
+    try {
+      const res = await fetch(TEAMS_ENDPOINT, { method: "GET" });
+      if (!res.ok) {
+        const txt = await res.text();
+        throw new Error(txt || "Failed to load teams");
+      }
+
+      const data = await res.json();
+      ALL_TEAMS = Array.isArray(data.teams) ? data.teams : [];
+      ALL_TEAMS.sort((a, b) => a.toLowerCase().localeCompare(b.toLowerCase()));
+
+      showMsg(`<strong>Loaded ${ALL_TEAMS.length} team(s).</strong> Select one or more below.`);
+      renderTeamPicker(teamFilterEl.value);
+
+    } catch (err) {
+      console.error(err);
+      showMsg(`<strong>Failed to load teams.</strong><br>${err.message || err}`, true);
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  loadTeamsBtn.addEventListener("click", loadTeams);
+
+  teamFilterEl.addEventListener("input", () => {
+    renderTeamPicker(teamFilterEl.value);
+  });
+
+  // keep count updated as user clicks
+  teamPickerEl.addEventListener("change", () => {
+    const checkedNow = getCheckedTeamsFromPicker();
+    selectedCountEl.textContent = `Selected: ${checkedNow.length}`;
+  });
+
+  applySelectedBtn.addEventListener("click", () => {
+    const teams = getCheckedTeamsFromPicker();
+    if (!teams.length) {
+      showMsg("<strong>Select at least one team.</strong>", true);
+      return;
+    }
+
+    teamNameEl.value = teams.join(", ");
+    showMsg(`<strong>Selected ${teams.length} team(s).</strong> Now click Generate PDF (ZIP recommended).`);
+  });
+
+  // ====== GENERATE ======
   btn.addEventListener("click", async () => {
     clearMsg();
 
@@ -259,8 +402,7 @@
       const oneDayName = (onedayNameEl.value || "").trim() || "One-Day Team";
       const players = (onedayPlayersEl.value || "").trim();
 
-      // NOTE: borrowed players input lives in team section UI.
-      // If you want borrowed in one-day mode too, move the textarea outside sections.
+      // Borrowed players input is in Team mode section
       const borrowed = (borrowedEl.value || "").trim();
 
       if (!players) {
