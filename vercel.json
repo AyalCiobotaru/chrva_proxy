@@ -1,11 +1,37 @@
 {
   "rewrites": [
-    { "source": "/api/chrva", "destination": "/api/chrva.js" },
-    { "source": "/api/subs", "destination": "/api/sub-list.js" },
-    { "source": "/api/free-agents", "destination": "/api/free-agent.js" },
-
-    { "source": "/api/roster", "destination": "/api/roster.py" },
-    { "source": "/api/rosters", "destination": "/api/rosters.py" },
-    { "source": "/api/teams", "destination": "/api/teams.py" }
-  ]
+    {
+      "source": "/api/chrva",
+      "destination": "/api/chrva.js"
+    },
+    {
+      "source": "/api/assets",
+      "destination": "/api/assets.js"
+    },
+    {
+      "source": "/api/subs",
+      "destination": "/api/sub-list.js"
+    },
+    {
+      "source": "/api/free-agents",
+      "destination": "/api/free-agent.js"
+    },
+    {
+      "source": "/api/roster",
+      "destination": "/api/roster.py"
+    },
+    {
+      "source": "/api/rosters",
+      "destination": "/api/rosters.py"
+    },
+    {
+      "source": "/api/teams",
+      "destination": "/api/teams.py"
+    }
+  ],
+  "functions": {
+    "api/assets.js": {
+      "includeFiles": "assets/**"
+    }
+  }
 }
