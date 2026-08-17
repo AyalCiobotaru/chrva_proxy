@@ -62,11 +62,24 @@ function finishNumber(finish) {
 
 function calculatePoints(result, tournament) {
   const finish = String(result.finish || "").trim().toUpperCase();
-  if (finish === "DNMP") return BASE_POINTS.DNMP;
+  if (finish === "DNMP") {
+    return {
+      points: BASE_POINTS.DNMP,
+      basePoints: BASE_POINTS.DNMP,
+      multiplier: 1,
+      multiplierPercent: 100
+    };
+  }
 
   const bracket = String(result.bracket || "").trim().toUpperCase();
   const basePoints = BASE_POINTS[bracket]?.[finishNumber(finish)] || 0;
-  return Math.round(basePoints * teamMultiplier(tournament?.total_teams));
+  const multiplier = teamMultiplier(tournament?.total_teams);
+  return {
+    points: Math.round(basePoints * multiplier),
+    basePoints,
+    multiplier,
+    multiplierPercent: Math.round(multiplier * 100)
+  };
 }
 
 function normalizeDate(value) {
@@ -156,13 +169,16 @@ function buildTeam(team, playerIndex) {
 }
 
 function buildTournamentResult(result, tournament, team, playerIndex) {
+  const pointCalculation = calculatePoints(result, tournament);
+
   return {
     season: String(result.season || "").trim(),
     tournamentId: String(result.tournament_id || "").trim(),
     name: String(tournament?.name || result.tournament_id || "").trim(),
     date: normalizeDate(tournament?.date),
     bracket: String(result.bracket || "").trim(),
-    points: calculatePoints(result, tournament),
+    points: pointCalculation.points,
+    pointCalculation,
     total_teams: numberFor(tournament?.total_teams),
     finish: String(result.finish || "").trim(),
     notes: String(result.Notes || "").trim(),

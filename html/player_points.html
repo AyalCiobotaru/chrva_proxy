@@ -378,6 +378,12 @@
       return team.name || playerNames || "-";
     }
 
+
+    function pointsText(result) {
+      var calc = result.pointCalculation || {};
+      if (!calc.basePoints || !calc.multiplierPercent) return String(result.points || 0);
+      return String(result.points || 0) + " (" + calc.basePoints + " x " + calc.multiplierPercent + "%)";
+    }
     function detailsTable(results) {
       if (!results.length) {
         return "<div class=\"chrva-player-points__status\">No tournament results listed.</div>";
@@ -391,7 +397,7 @@
             "<td>" + escapeHtml(result.name || "Tournament") + "</td>" +
             "<td>" + escapeHtml(teamText(result.team)) + "</td>" +
             "<td>" + escapeHtml(result.bracket || "-") + "</td>" +
-            "<td>" + escapeHtml(result.points || 0) + "</td>" +
+            "<td>" + escapeHtml(pointsText(result)) + "</td>" +
             "<td>" + escapeHtml(result.finish || "-") + "</td>" +
             "<td>" + escapeHtml(result.total_teams || "-") + "</td>" +
             "</tr>";
