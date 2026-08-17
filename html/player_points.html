@@ -380,9 +380,7 @@
 
 
     function pointsText(result) {
-      var calc = result.pointCalculation || {};
-      if (!calc.basePoints || !calc.multiplierPercent) return String(result.points || 0);
-      return String(result.points || 0) + " (" + calc.basePoints + " x " + calc.multiplierPercent + "%)";
+      return String(result.points || 0) + (result.pointsFormula ? " (" + result.pointsFormula + ")" : "");
     }
     function detailsTable(results) {
       if (!results.length) {
