@@ -1,10 +1,22 @@
 <div class="chrva-player-points" data-player-points data-api-url="https://chrva-proxy.vercel.app/api/player-points">
-  <div class="chrva-player-points__header">
-    <div>
-      <p class="chrva-player-points__eyebrow">CHRVA Adult Volleyball</p>
-      <h2>Player Points</h2>
+  <h2>RevCo Standings for 2026-2027 Season</h2>
+
+  <div class="chrva-player-points__controls" aria-label="Standings controls">
+    <div class="chrva-player-points__gender" aria-label="Gender standings filters">
+      <button type="button" class="is-active" data-gender-filter="M">Men</button>
+      <button type="button" data-gender-filter="F">Women</button>
     </div>
-    <div class="chrva-player-points__count" data-count></div>
+    <label class="chrva-player-points__season">
+      <span>Season</span>
+      <select data-season-filter>
+        <option value="2026">2026</option>
+        <option value="2027">2027</option>
+      </select>
+    </label>
+    <label class="chrva-player-points__search">
+      <span>Search</span>
+      <input type="search" data-player-search placeholder="Player name">
+    </label>
   </div>
 
   <div class="chrva-player-points__status" data-status>Loading player points...</div>
@@ -14,141 +26,199 @@
       <thead>
         <tr>
           <th>Player</th>
-          <th>Total Points</th>
+          <th>Points Earned</th>
           <th>Top 2 Finishes</th>
-          <th>Tournaments</th>
+          <th>4s Tournaments Played</th>
         </tr>
       </thead>
       <tbody data-player-rows></tbody>
     </table>
+    <div class="chrva-player-points__count" data-count></div>
   </div>
 </div>
 
 <style>
   .chrva-player-points {
-    --chrva-ink: #172033;
-    --chrva-muted: #5b667a;
-    --chrva-line: #d9e0ea;
-    --chrva-soft: #f4f7fb;
-    --chrva-card: #ffffff;
-    --chrva-red: #b32635;
-    --chrva-red-dark: #8f1e2b;
-    --chrva-blue: #174f78;
-    color: var(--chrva-ink);
+    --chrva-red: #b51b2b;
+    --chrva-red-dark: #941523;
+    --chrva-row: #e9e9e9;
+    --chrva-row-alt: #f4f4f4;
+    --chrva-line: #ffffff;
+    --chrva-text: #48576a;
+    color: var(--chrva-text);
     font-family: Arial, Helvetica, sans-serif;
     margin: 0 auto;
-    max-width: 1180px;
+    width: 100%;
   }
 
   .chrva-player-points * {
     box-sizing: border-box;
   }
 
-  .chrva-player-points__header {
-    align-items: end;
-    border-bottom: 4px solid var(--chrva-red);
-    display: flex;
-    gap: 16px;
-    justify-content: space-between;
-    margin-bottom: 18px;
-    padding-bottom: 14px;
-  }
-
-  .chrva-player-points__eyebrow {
-    color: var(--chrva-red);
-    font-size: 13px;
-    font-weight: 700;
-    letter-spacing: 0;
+  .chrva-player-points h2 {
+    color: var(--chrva-red-dark);
+    font-family: Georgia, "Times New Roman", serif;
+    font-size: 28px;
+    font-variant-numeric: lining-nums;
+    font-feature-settings: "lnum" 1;
+    font-weight: 900;
+    line-height: 1.1;
     margin: 0 0 4px;
     text-transform: uppercase;
   }
 
-  .chrva-player-points h2 {
-    color: var(--chrva-ink);
-    font-size: 30px;
-    line-height: 1.15;
+  .chrva-player-points__controls {
+    align-items: end;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    justify-content: space-between;
+    margin: 0 0 8px;
+  }
+
+  .chrva-player-points__gender {
+    display: flex;
+    gap: 8px;
+  }
+
+  .chrva-player-points__controls button {
+    background: #fff;
+    border: 1px solid var(--chrva-red);
+    color: var(--chrva-red-dark);
+    cursor: pointer;
+    font: inherit;
+    font-size: 13px;
+    font-weight: 800;
+    min-height: 34px;
+    padding: 7px 14px;
+    text-transform: uppercase;
+  }
+
+  .chrva-player-points__controls button:hover,
+  .chrva-player-points__controls button:focus,
+  .chrva-player-points__controls button.is-active {
+    background: var(--chrva-red);
+    color: #fff;
+    outline: 0;
+  }
+
+  .chrva-player-points__season,
+  .chrva-player-points__search {
+    align-items: center;
+    display: flex;
+    gap: 8px;
     margin: 0;
   }
 
-  .chrva-player-points__count {
-    color: var(--chrva-muted);
-    font-size: 14px;
-    font-weight: 700;
-    white-space: nowrap;
+  .chrva-player-points__season span,
+  .chrva-player-points__search span {
+    color: var(--chrva-red-dark);
+    font-size: 12px;
+    font-weight: 800;
+    text-transform: uppercase;
+  }
+
+  .chrva-player-points__season select,
+  .chrva-player-points__search input {
+    border: 1px solid #c7c7c7;
+    color: var(--chrva-text);
+    font: inherit;
+    font-size: 13px;
+    min-height: 34px;
+    padding: 7px 10px;
+  }
+
+  .chrva-player-points__season select {
+    min-width: 96px;
+  }
+
+  .chrva-player-points__search input {
+    width: 220px;
+  }
+
+  .chrva-player-points__season select:focus,
+  .chrva-player-points__search input:focus {
+    border-color: var(--chrva-red);
+    outline: 1px solid var(--chrva-red);
   }
 
   .chrva-player-points__status {
-    background: var(--chrva-soft);
-    border: 1px solid var(--chrva-line);
-    color: var(--chrva-muted);
+    background: var(--chrva-row);
+    color: var(--chrva-text);
+    font-size: 13px;
     font-weight: 700;
-    padding: 18px;
-    text-align: center;
+    padding: 12px 14px;
   }
 
   .chrva-player-points__table-wrap {
-    border: 1px solid var(--chrva-line);
     overflow-x: auto;
   }
 
   .chrva-player-points__table {
-    border-collapse: collapse;
-    min-width: 840px;
+    border-collapse: separate;
+    border-spacing: 0;
+    font-size: 12px;
     width: 100%;
   }
 
   .chrva-player-points__table th {
-    background: var(--chrva-blue);
+    background: var(--chrva-red);
+    border-right: 2px solid var(--chrva-line);
     color: #fff;
-    font-size: 12px;
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: 13px;
+    font-variant-numeric: lining-nums;
+    font-feature-settings: "lnum" 1;
+    font-weight: 900;
     letter-spacing: 0;
-    padding: 12px 10px;
+    padding: 9px 14px;
     text-align: left;
     text-transform: uppercase;
     white-space: nowrap;
   }
 
+  .chrva-player-points__table th:nth-child(2),
+  .chrva-player-points__table th:nth-child(3),
+  .chrva-player-points__table th:nth-child(4) {
+    text-align: center;
+  }
+
   .chrva-player-points__table td {
-    border-top: 1px solid var(--chrva-line);
-    padding: 13px 10px;
+    background: var(--chrva-row);
+    border-bottom: 2px solid var(--chrva-line);
+    border-right: 2px solid var(--chrva-line);
+    padding: 9px 14px;
     vertical-align: top;
   }
 
+  .chrva-player-points__player-row:nth-of-type(4n + 3) td {
+    background: var(--chrva-row-alt);
+  }
+
   .chrva-player-points__player-row {
-    background: #fff;
     cursor: pointer;
   }
 
-  .chrva-player-points__player-row:nth-child(4n + 3) {
-    background: #fafbfd;
-  }
-
-  .chrva-player-points__player-row:hover,
-  .chrva-player-points__player-row:focus {
-    background: #eef3f8;
-    outline: 2px solid transparent;
+  .chrva-player-points__player-row:hover td,
+  .chrva-player-points__player-row:focus td {
+    background: #dddddd;
+    outline: 0;
   }
 
   .chrva-player-points__name {
-    font-weight: 900;
+    font-weight: 700;
   }
 
-  .chrva-player-points__meta {
-    color: var(--chrva-muted);
-    font-size: 13px;
-    margin-top: 3px;
-  }
-
-  .chrva-player-points__points {
-    color: var(--chrva-red-dark);
-    font-size: 20px;
-    font-weight: 900;
+  .chrva-player-points__points,
+  .chrva-player-points__played {
+    font-weight: 700;
+    text-align: center;
     white-space: nowrap;
   }
 
   .chrva-player-points__top-results {
     display: grid;
-    gap: 5px;
+    gap: 3px;
   }
 
   .chrva-player-points__top-result {
@@ -157,9 +227,12 @@
 
   .chrva-player-points__toggle {
     color: var(--chrva-red-dark);
-    font-size: 13px;
-    font-weight: 900;
-    white-space: nowrap;
+    display: block;
+    font-size: 11px;
+    font-weight: 800;
+    margin-top: 2px;
+    text-align: center;
+    text-transform: uppercase;
   }
 
   .chrva-player-points__details-row[hidden] {
@@ -167,51 +240,49 @@
   }
 
   .chrva-player-points__details-cell {
-    background: #f7f9fc;
-    padding: 0 10px 14px;
+    background: #fff !important;
+    padding: 0 0 8px !important;
   }
 
   .chrva-player-points__details {
-    border: 1px solid var(--chrva-line);
-    margin-top: 10px;
+    border: 1px solid #d7d7d7;
   }
 
   .chrva-player-points__details table {
     border-collapse: collapse;
+    font-size: 12px;
     width: 100%;
   }
 
   .chrva-player-points__details th {
-    background: #eef3f8;
-    color: var(--chrva-muted);
+    background: #cfcfcf;
+    color: #333;
+    font-family: Arial, Helvetica, sans-serif;
     font-size: 11px;
-    font-weight: 900;
-    padding: 9px 10px;
-    text-transform: uppercase;
+    padding: 8px 10px;
   }
 
   .chrva-player-points__details td {
     background: #fff;
-    border-top: 1px solid var(--chrva-line);
-    padding: 10px;
+    border: 1px solid #e5e5e5;
+    padding: 8px 10px;
+  }
+
+  .chrva-player-points__count {
+    color: var(--chrva-text);
+    font-size: 12px;
+    font-weight: 700;
+    margin-top: 6px;
+    text-align: right;
   }
 
   @media (max-width: 760px) {
-    .chrva-player-points__header {
-      align-items: start;
-      display: grid;
-    }
-
     .chrva-player-points h2 {
       font-size: 24px;
     }
 
-    .chrva-player-points__count {
-      white-space: normal;
-    }
-
     .chrva-player-points__table {
-      min-width: 720px;
+      min-width: 760px;
     }
   }
 </style>
@@ -226,7 +297,15 @@
     var tableWrap = root.querySelector("[data-table-wrap]");
     var rowsEl = root.querySelector("[data-player-rows]");
     var countEl = root.querySelector("[data-count]");
+    var searchInput = root.querySelector("[data-player-search]");
+    var seasonSelect = root.querySelector("[data-season-filter]");
+    var filterButtons = Array.prototype.slice.call(root.querySelectorAll("[data-gender-filter]"));
     var expanded = {};
+    var allPlayers = [];
+    var selectedGender = "M";
+    var selectedSeason = seasonSelect ? seasonSelect.value : "2026";
+    var searchTerm = "";
+    var maxVisiblePlayers = 10;
 
     function escapeHtml(value) {
       return String(value || "")
@@ -251,6 +330,10 @@
       return [];
     }
 
+    function genderLabel(value) {
+      return value === "F" ? "Women" : "Men";
+    }
+
     function topResults(player) {
       return (player.results || [])
         .slice()
@@ -271,20 +354,19 @@
       var id = escapeHtml(player.usavMemberId);
       var isExpanded = !!expanded[player.usavMemberId];
       var top = topResults(player);
-      var topHtml = top.length ? top.map(resultLine).join("") : "<span class=\"chrva-player-points__meta\">No finishes listed</span>";
+      var topHtml = top.length ? top.map(resultLine).join("") : "No finishes listed";
 
       return "<tr class=\"chrva-player-points__player-row\" tabindex=\"0\" role=\"button\" aria-expanded=\"" + isExpanded + "\" data-player-id=\"" + id + "\">" +
-        "<td><div class=\"chrva-player-points__name\">" + escapeHtml(player.name || "Unknown Player") + "</div>" +
-        "<div class=\"chrva-player-points__meta\">" + escapeHtml(player.gender || "") + "</div></td>" +
-        "<td><div class=\"chrva-player-points__points\">" + escapeHtml(player.totalPoints || 0) + "</div></td>" +
+        "<td><div class=\"chrva-player-points__name\">" + escapeHtml(player.name || "Unknown Player") + "</div></td>" +
+        "<td class=\"chrva-player-points__points\">" + escapeHtml(player.totalPoints || 0) + "</td>" +
         "<td><div class=\"chrva-player-points__top-results\">" + topHtml + "</div></td>" +
-        "<td><span class=\"chrva-player-points__toggle\">" + (isExpanded ? "Hide" : "View") + " " + escapeHtml(player.tournamentsPlayed || 0) + "</span></td>" +
+        "<td class=\"chrva-player-points__played\">" + escapeHtml(player.tournamentsPlayed || 0) +
+        "<span class=\"chrva-player-points__toggle\">" + (isExpanded ? "Hide Details" : "View Details") + "</span></td>" +
         "</tr>" +
         "<tr class=\"chrva-player-points__details-row\" " + (isExpanded ? "" : "hidden") + " data-details-for=\"" + id + "\">" +
         "<td class=\"chrva-player-points__details-cell\" colspan=\"4\">" + detailsTable(player.results || []) + "</td>" +
         "</tr>";
     }
-
 
     function teamText(team) {
       if (!team || (!team.name && !(team.players || []).length)) return "-";
@@ -294,6 +376,7 @@
       if (team.name && playerNames) return team.name + ": " + playerNames;
       return team.name || playerNames || "-";
     }
+
     function detailsTable(results) {
       if (!results.length) {
         return "<div class=\"chrva-player-points__status\">No tournament results listed.</div>";
@@ -313,48 +396,115 @@
         }).join("") + "</tbody></table></div>";
     }
 
-    function render(players) {
+    function filteredPlayers() {
+      return allPlayers.filter(function (player) {
+        var genderMatches = String(player.gender || "").toUpperCase() === selectedGender;
+        var nameMatches = !searchTerm || String(player.name || "").toLowerCase().indexOf(searchTerm) !== -1;
+        return genderMatches && nameMatches;
+      });
+    }
+
+    function visiblePlayers() {
+      return filteredPlayers().slice(0, maxVisiblePlayers);
+    }
+
+    function render() {
+      var matchingPlayers = filteredPlayers();
+      var players = matchingPlayers.slice(0, maxVisiblePlayers);
       rowsEl.innerHTML = players.map(playerRow).join("");
-      countEl.textContent = players.length + " player" + (players.length === 1 ? "" : "s");
+      countEl.textContent = selectedSeason + " " + genderLabel(selectedGender) + ": showing " + players.length + " of " + matchingPlayers.length + " player" + (matchingPlayers.length === 1 ? "" : "s");
       statusEl.hidden = true;
       tableWrap.hidden = false;
+
+      if (!players.length) {
+        statusEl.hidden = false;
+        statusEl.textContent = searchTerm ? "No players match that search." : "No " + genderLabel(selectedGender).toLowerCase() + " standings are available.";
+      }
     }
 
-    function togglePlayer(id, players) {
+    function setGender(gender) {
+      selectedGender = gender;
+      expanded = {};
+      filterButtons.forEach(function (button) {
+        var active = button.getAttribute("data-gender-filter") === selectedGender;
+        button.classList.toggle("is-active", active);
+        button.setAttribute("aria-pressed", active ? "true" : "false");
+      });
+      render();
+    }
+
+    function togglePlayer(id) {
       expanded[id] = !expanded[id];
-      render(players);
+      render();
     }
 
-    fetch(apiUrl, { credentials: "include" })
+    if (searchInput) {
+      searchInput.addEventListener("input", function () {
+        searchTerm = String(searchInput.value || "").trim().toLowerCase();
+        expanded = {};
+        render();
+      });
+    }
+
+    filterButtons.forEach(function (button) {
+      button.setAttribute("aria-pressed", button.classList.contains("is-active") ? "true" : "false");
+      button.addEventListener("click", function () {
+        setGender(button.getAttribute("data-gender-filter") || "M");
+      });
+    });
+
+    function standingsUrl() {
+      var separator = apiUrl.indexOf("?") === -1 ? "?" : "&";
+      return apiUrl + separator + "season=" + encodeURIComponent(selectedSeason);
+    }
+
+    function loadStandings() {
+      statusEl.hidden = false;
+      statusEl.textContent = "Loading player points...";
+      tableWrap.hidden = true;
+      expanded = {};
+
+      fetch(standingsUrl(), { credentials: "include" })
       .then(function (response) {
         if (!response.ok) throw new Error("Unable to load player points.");
         return response.json();
       })
       .then(function (payload) {
-        var players = normalizePlayers(payload).sort(function (a, b) {
+        allPlayers = normalizePlayers(payload).sort(function (a, b) {
           return Number(b.totalPoints || 0) - Number(a.totalPoints || 0) || String(a.name || "").localeCompare(String(b.name || ""));
         });
 
-        if (!players.length) {
+        if (!allPlayers.length) {
           statusEl.textContent = "No player points are available.";
           return;
         }
 
-        render(players);
-        rowsEl.addEventListener("click", function (event) {
-          var row = event.target.closest ? event.target.closest("[data-player-id]") : null;
-          if (row) togglePlayer(row.getAttribute("data-player-id"), players);
-        });
-        rowsEl.addEventListener("keydown", function (event) {
-          if (event.key !== "Enter" && event.key !== " ") return;
-          var row = event.target.closest ? event.target.closest("[data-player-id]") : null;
-          if (!row) return;
-          event.preventDefault();
-          togglePlayer(row.getAttribute("data-player-id"), players);
-        });
+        render();
+
       })
       .catch(function (error) {
         statusEl.textContent = error.message || "Unable to load player points.";
       });
+    }
+
+    rowsEl.addEventListener("click", function (event) {
+      var row = event.target.closest ? event.target.closest("[data-player-id]") : null;
+      if (row) togglePlayer(row.getAttribute("data-player-id"));
+    });
+    rowsEl.addEventListener("keydown", function (event) {
+      if (event.key !== "Enter" && event.key !== " ") return;
+      var row = event.target.closest ? event.target.closest("[data-player-id]") : null;
+      if (!row) return;
+      event.preventDefault();
+      togglePlayer(row.getAttribute("data-player-id"));
+    });
+    if (seasonSelect) {
+      seasonSelect.addEventListener("change", function () {
+        selectedSeason = seasonSelect.value;
+        loadStandings();
+      });
+    }
+
+    loadStandings();
   })();
 </script>

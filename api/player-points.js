@@ -1,7 +1,9 @@
 import fetch from "node-fetch";
 
 const ALLOWED_ORIGIN = "https://www.chrva.org";
-const RESULTS_URL = process.env.GS_PLAYER_POINTS_URL;
+const RESULTS_URL = process.env.GS_PLAYER_POINTS_URL || process.env.GS_PLAYER_RESULTS_URL;
+const DEFAULT_SEASON = "2026";
+const ALLOWED_SEASONS = new Set(["2026", "2027"]);
 const TEAM_PLAYER_ID_COLUMNS = ["player1_id", "player2_id", "player3_id", "player4_id"];
 
 function setCorsHeaders(res) {
@@ -13,6 +15,14 @@ function setCorsHeaders(res) {
 
 function firstQueryValue(value) {
   return Array.isArray(value) ? value[0] : value;
+}
+
+function requestedSeason(req) {
+  const season = String(firstQueryValue(req.query.season) || DEFAULT_SEASON).trim();
+  if (!ALLOWED_SEASONS.has(season)) {
+    throw new Error("season must be 2026 or 2027");
+  }
+  return season;
 }
 
 function numberFor(value) {
@@ -108,6 +118,7 @@ function buildTeam(team, playerIndex) {
 
 function buildTournamentResult(result, tournament, team, playerIndex) {
   return {
+    season: String(result.season || "").trim(),
     tournamentId: String(result.tournament_id || "").trim(),
     name: String(tournament?.name || result.tournament_id || "").trim(),
     date: normalizeDate(tournament?.date),
@@ -144,15 +155,16 @@ function buildPlayerSummary(player, results, tournamentIndex, teamsByTournament,
   };
 }
 
-function buildPlayerSummaries(payload) {
+function buildPlayerSummaries(payload, season) {
   const { players, tournaments, results, teams } = normalizePayload(payload);
+  const seasonResults = results.filter((result) => String(result.season || "").trim() === season);
   const tournamentIndex = indexTournaments(tournaments);
   const teamsByTournament = groupTeamsByTournament(teams);
   const playerIndex = indexPlayers(players);
 
   return players
     .filter((player) => String(player.usav_member_id || "").trim())
-    .map((player) => buildPlayerSummary(player, results, tournamentIndex, teamsByTournament, playerIndex))
+    .map((player) => buildPlayerSummary(player, seasonResults, tournamentIndex, teamsByTournament, playerIndex))
     .filter((player) => player.tournamentsPlayed > 0)
     .sort((a, b) => b.totalPoints - a.totalPoints || a.name.localeCompare(b.name));
 }
@@ -183,14 +195,15 @@ export default async function handler(req, res) {
     }
 
     const payload = await response.json();
-    const players = buildPlayerSummaries(payload);
+    const season = requestedSeason(req);
+    const players = buildPlayerSummaries(payload, season);
     const usavMemberId = String(firstQueryValue(req.query.usavMemberId || req.query.id) || "").trim();
 
     res.setHeader("Content-Type", "application/json");
     res.setHeader("Cache-Control", "no-store");
 
     if (!usavMemberId) {
-      res.status(200).json({ players });
+      res.status(200).json({ season, players });
       return;
     }
 
