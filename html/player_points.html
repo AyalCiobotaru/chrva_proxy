@@ -1,0 +1,360 @@
+<div class="chrva-player-points" data-player-points data-api-url="https://chrva-proxy.vercel.app/api/player-points">
+  <div class="chrva-player-points__header">
+    <div>
+      <p class="chrva-player-points__eyebrow">CHRVA Adult Volleyball</p>
+      <h2>Player Points</h2>
+    </div>
+    <div class="chrva-player-points__count" data-count></div>
+  </div>
+
+  <div class="chrva-player-points__status" data-status>Loading player points...</div>
+
+  <div class="chrva-player-points__table-wrap" data-table-wrap hidden>
+    <table class="chrva-player-points__table">
+      <thead>
+        <tr>
+          <th>Player</th>
+          <th>Total Points</th>
+          <th>Top 2 Finishes</th>
+          <th>Tournaments</th>
+        </tr>
+      </thead>
+      <tbody data-player-rows></tbody>
+    </table>
+  </div>
+</div>
+
+<style>
+  .chrva-player-points {
+    --chrva-ink: #172033;
+    --chrva-muted: #5b667a;
+    --chrva-line: #d9e0ea;
+    --chrva-soft: #f4f7fb;
+    --chrva-card: #ffffff;
+    --chrva-red: #b32635;
+    --chrva-red-dark: #8f1e2b;
+    --chrva-blue: #174f78;
+    color: var(--chrva-ink);
+    font-family: Arial, Helvetica, sans-serif;
+    margin: 0 auto;
+    max-width: 1180px;
+  }
+
+  .chrva-player-points * {
+    box-sizing: border-box;
+  }
+
+  .chrva-player-points__header {
+    align-items: end;
+    border-bottom: 4px solid var(--chrva-red);
+    display: flex;
+    gap: 16px;
+    justify-content: space-between;
+    margin-bottom: 18px;
+    padding-bottom: 14px;
+  }
+
+  .chrva-player-points__eyebrow {
+    color: var(--chrva-red);
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 0;
+    margin: 0 0 4px;
+    text-transform: uppercase;
+  }
+
+  .chrva-player-points h2 {
+    color: var(--chrva-ink);
+    font-size: 30px;
+    line-height: 1.15;
+    margin: 0;
+  }
+
+  .chrva-player-points__count {
+    color: var(--chrva-muted);
+    font-size: 14px;
+    font-weight: 700;
+    white-space: nowrap;
+  }
+
+  .chrva-player-points__status {
+    background: var(--chrva-soft);
+    border: 1px solid var(--chrva-line);
+    color: var(--chrva-muted);
+    font-weight: 700;
+    padding: 18px;
+    text-align: center;
+  }
+
+  .chrva-player-points__table-wrap {
+    border: 1px solid var(--chrva-line);
+    overflow-x: auto;
+  }
+
+  .chrva-player-points__table {
+    border-collapse: collapse;
+    min-width: 840px;
+    width: 100%;
+  }
+
+  .chrva-player-points__table th {
+    background: var(--chrva-blue);
+    color: #fff;
+    font-size: 12px;
+    letter-spacing: 0;
+    padding: 12px 10px;
+    text-align: left;
+    text-transform: uppercase;
+    white-space: nowrap;
+  }
+
+  .chrva-player-points__table td {
+    border-top: 1px solid var(--chrva-line);
+    padding: 13px 10px;
+    vertical-align: top;
+  }
+
+  .chrva-player-points__player-row {
+    background: #fff;
+    cursor: pointer;
+  }
+
+  .chrva-player-points__player-row:nth-child(4n + 3) {
+    background: #fafbfd;
+  }
+
+  .chrva-player-points__player-row:hover,
+  .chrva-player-points__player-row:focus {
+    background: #eef3f8;
+    outline: 2px solid transparent;
+  }
+
+  .chrva-player-points__name {
+    font-weight: 900;
+  }
+
+  .chrva-player-points__meta {
+    color: var(--chrva-muted);
+    font-size: 13px;
+    margin-top: 3px;
+  }
+
+  .chrva-player-points__points {
+    color: var(--chrva-red-dark);
+    font-size: 20px;
+    font-weight: 900;
+    white-space: nowrap;
+  }
+
+  .chrva-player-points__top-results {
+    display: grid;
+    gap: 5px;
+  }
+
+  .chrva-player-points__top-result {
+    line-height: 1.35;
+  }
+
+  .chrva-player-points__toggle {
+    color: var(--chrva-red-dark);
+    font-size: 13px;
+    font-weight: 900;
+    white-space: nowrap;
+  }
+
+  .chrva-player-points__details-row[hidden] {
+    display: none;
+  }
+
+  .chrva-player-points__details-cell {
+    background: #f7f9fc;
+    padding: 0 10px 14px;
+  }
+
+  .chrva-player-points__details {
+    border: 1px solid var(--chrva-line);
+    margin-top: 10px;
+  }
+
+  .chrva-player-points__details table {
+    border-collapse: collapse;
+    width: 100%;
+  }
+
+  .chrva-player-points__details th {
+    background: #eef3f8;
+    color: var(--chrva-muted);
+    font-size: 11px;
+    font-weight: 900;
+    padding: 9px 10px;
+    text-transform: uppercase;
+  }
+
+  .chrva-player-points__details td {
+    background: #fff;
+    border-top: 1px solid var(--chrva-line);
+    padding: 10px;
+  }
+
+  @media (max-width: 760px) {
+    .chrva-player-points__header {
+      align-items: start;
+      display: grid;
+    }
+
+    .chrva-player-points h2 {
+      font-size: 24px;
+    }
+
+    .chrva-player-points__count {
+      white-space: normal;
+    }
+
+    .chrva-player-points__table {
+      min-width: 720px;
+    }
+  }
+</style>
+
+<script>
+  (function () {
+    var root = document.querySelector("[data-player-points]");
+    if (!root) return;
+
+    var apiUrl = root.getAttribute("data-api-url") || "https://chrva-proxy.vercel.app/api/player-points";
+    var statusEl = root.querySelector("[data-status]");
+    var tableWrap = root.querySelector("[data-table-wrap]");
+    var rowsEl = root.querySelector("[data-player-rows]");
+    var countEl = root.querySelector("[data-count]");
+    var expanded = {};
+
+    function escapeHtml(value) {
+      return String(value || "")
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+    }
+
+    function formatDate(value) {
+      if (!value) return "TBD";
+      var date = new Date(value + "T00:00:00");
+      if (Number.isNaN(date.getTime())) return value;
+      return date.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
+    }
+
+    function normalizePlayers(payload) {
+      if (Array.isArray(payload)) return payload;
+      if (Array.isArray(payload.players)) return payload.players;
+      if (payload && payload.usavMemberId) return [payload];
+      return [];
+    }
+
+    function topResults(player) {
+      return (player.results || [])
+        .slice()
+        .sort(function (a, b) {
+          return Number(b.points || 0) - Number(a.points || 0) || String(a.date || "").localeCompare(String(b.date || ""));
+        })
+        .slice(0, 2);
+    }
+
+    function resultLine(result) {
+      var finish = result.finish ? " - " + escapeHtml(result.finish) : "";
+      return "<div class=\"chrva-player-points__top-result\"><strong>" +
+        escapeHtml(result.name || "Tournament") + "</strong>: " +
+        escapeHtml(result.points || 0) + " pts" + finish + "</div>";
+    }
+
+    function playerRow(player) {
+      var id = escapeHtml(player.usavMemberId);
+      var isExpanded = !!expanded[player.usavMemberId];
+      var top = topResults(player);
+      var topHtml = top.length ? top.map(resultLine).join("") : "<span class=\"chrva-player-points__meta\">No finishes listed</span>";
+
+      return "<tr class=\"chrva-player-points__player-row\" tabindex=\"0\" role=\"button\" aria-expanded=\"" + isExpanded + "\" data-player-id=\"" + id + "\">" +
+        "<td><div class=\"chrva-player-points__name\">" + escapeHtml(player.name || "Unknown Player") + "</div>" +
+        "<div class=\"chrva-player-points__meta\">" + escapeHtml(player.gender || "") + "</div></td>" +
+        "<td><div class=\"chrva-player-points__points\">" + escapeHtml(player.totalPoints || 0) + "</div></td>" +
+        "<td><div class=\"chrva-player-points__top-results\">" + topHtml + "</div></td>" +
+        "<td><span class=\"chrva-player-points__toggle\">" + (isExpanded ? "Hide" : "View") + " " + escapeHtml(player.tournamentsPlayed || 0) + "</span></td>" +
+        "</tr>" +
+        "<tr class=\"chrva-player-points__details-row\" " + (isExpanded ? "" : "hidden") + " data-details-for=\"" + id + "\">" +
+        "<td class=\"chrva-player-points__details-cell\" colspan=\"4\">" + detailsTable(player.results || []) + "</td>" +
+        "</tr>";
+    }
+
+
+    function teamText(team) {
+      if (!team || (!team.name && !(team.players || []).length)) return "-";
+      var playerNames = (team.players || []).map(function (player) {
+        return player.name || player.usavMemberId;
+      }).filter(Boolean).join(", ");
+      if (team.name && playerNames) return team.name + ": " + playerNames;
+      return team.name || playerNames || "-";
+    }
+    function detailsTable(results) {
+      if (!results.length) {
+        return "<div class=\"chrva-player-points__status\">No tournament results listed.</div>";
+      }
+
+      return "<div class=\"chrva-player-points__details\"><table>" +
+        "<thead><tr><th>Date</th><th>Tournament</th><th>Team</th><th>Points</th><th>Finish</th><th>Total Teams</th></tr></thead>" +
+        "<tbody>" + results.map(function (result) {
+          return "<tr>" +
+            "<td>" + escapeHtml(formatDate(result.date)) + "</td>" +
+            "<td>" + escapeHtml(result.name || "Tournament") + "</td>" +
+            "<td>" + escapeHtml(teamText(result.team)) + "</td>" +
+            "<td>" + escapeHtml(result.points || 0) + "</td>" +
+            "<td>" + escapeHtml(result.finish || "-") + "</td>" +
+            "<td>" + escapeHtml(result.total_teams || "-") + "</td>" +
+            "</tr>";
+        }).join("") + "</tbody></table></div>";
+    }
+
+    function render(players) {
+      rowsEl.innerHTML = players.map(playerRow).join("");
+      countEl.textContent = players.length + " player" + (players.length === 1 ? "" : "s");
+      statusEl.hidden = true;
+      tableWrap.hidden = false;
+    }
+
+    function togglePlayer(id, players) {
+      expanded[id] = !expanded[id];
+      render(players);
+    }
+
+    fetch(apiUrl, { credentials: "include" })
+      .then(function (response) {
+        if (!response.ok) throw new Error("Unable to load player points.");
+        return response.json();
+      })
+      .then(function (payload) {
+        var players = normalizePlayers(payload).sort(function (a, b) {
+          return Number(b.totalPoints || 0) - Number(a.totalPoints || 0) || String(a.name || "").localeCompare(String(b.name || ""));
+        });
+
+        if (!players.length) {
+          statusEl.textContent = "No player points are available.";
+          return;
+        }
+
+        render(players);
+        rowsEl.addEventListener("click", function (event) {
+          var row = event.target.closest ? event.target.closest("[data-player-id]") : null;
+          if (row) togglePlayer(row.getAttribute("data-player-id"), players);
+        });
+        rowsEl.addEventListener("keydown", function (event) {
+          if (event.key !== "Enter" && event.key !== " ") return;
+          var row = event.target.closest ? event.target.closest("[data-player-id]") : null;
+          if (!row) return;
+          event.preventDefault();
+          togglePlayer(row.getAttribute("data-player-id"), players);
+        });
+      })
+      .catch(function (error) {
+        statusEl.textContent = error.message || "Unable to load player points.";
+      });
+  })();
+</script>

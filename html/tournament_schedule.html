@@ -1,0 +1,781 @@
+<div class="chrva-schedule" data-chrva-adult-schedule>
+  <div class="chrva-schedule__header">
+    <div>
+      <p class="chrva-schedule__eyebrow">CHRVA Adult Volleyball</p>
+      <h2>2026-2027 Tournament Schedule</h2>
+    </div>
+    <div class="chrva-schedule__count" data-count></div>
+  </div>
+
+  <div class="chrva-schedule__controls" aria-label="Schedule filters">
+    <label>
+      <span>Month</span>
+      <select data-month-filter>
+        <option value="all">All months</option>
+      </select>
+    </label>
+
+    <label>
+      <span>Type</span>
+      <select data-type-filter>
+        <option value="all">All types</option>
+        <option value="men">Men</option>
+        <option value="women">Women</option>
+        <option value="revco">RevCo 4s</option>
+      </select>
+    </label>
+
+    <label>
+      <span>Sort</span>
+      <select data-sort-order>
+        <option value="asc">Date: soonest first</option>
+        <option value="desc">Date: latest first</option>
+      </select>
+    </label>
+  </div>
+
+  <div class="chrva-schedule__bulk-actions" aria-label="Month group controls">
+    <button type="button" data-expand-all>Expand all</button>
+    <button type="button" data-collapse-all>Collapse all</button>
+  </div>
+
+  <div class="chrva-schedule__table-wrap">
+    <table class="chrva-schedule__table">
+      <thead>
+        <tr>
+          <th>Date</th>
+          <th>Event</th>
+          <th>Division</th>
+          <th>Teams</th>
+          <th>Cost</th>
+          <th>Location</th>
+          <th>Register By</th>
+          <th>Links</th>
+        </tr>
+      </thead>
+      <tbody data-schedule-rows></tbody>
+    </table>
+  </div>
+
+  <div class="chrva-schedule__cards" data-schedule-cards></div>
+  <div class="chrva-schedule__empty" data-empty-state>No tournaments match those filters.</div>
+</div>
+
+<style>
+  .chrva-schedule {
+    --chrva-ink: #172033;
+    --chrva-muted: #5b667a;
+    --chrva-line: #d9e0ea;
+    --chrva-soft: #f4f7fb;
+    --chrva-card: #ffffff;
+    --chrva-red: #b32635;
+    --chrva-red-dark: #8f1e2b;
+    --chrva-blue: #174f78;
+    --chrva-green: #24745f;
+    color: var(--chrva-ink);
+    font-family: Arial, Helvetica, sans-serif;
+    margin: 0 auto;
+    max-width: 1180px;
+  }
+
+  .chrva-schedule * {
+    box-sizing: border-box;
+  }
+
+  .chrva-schedule__header {
+    align-items: end;
+    border-bottom: 4px solid var(--chrva-red);
+    display: flex;
+    gap: 16px;
+    justify-content: space-between;
+    margin-bottom: 18px;
+    padding-bottom: 14px;
+  }
+
+  .chrva-schedule__eyebrow {
+    color: var(--chrva-red);
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 0;
+    margin: 0 0 4px;
+    text-transform: uppercase;
+  }
+
+  .chrva-schedule h2 {
+    color: var(--chrva-ink);
+    font-size: 30px;
+    line-height: 1.15;
+    margin: 0;
+  }
+
+  .chrva-schedule__count {
+    color: var(--chrva-muted);
+    font-size: 14px;
+    font-weight: 700;
+    white-space: nowrap;
+  }
+
+  .chrva-schedule__controls {
+    background: var(--chrva-soft);
+    border: 1px solid var(--chrva-line);
+    display: grid;
+    gap: 12px;
+    grid-template-columns: repeat(3, minmax(180px, 1fr));
+    margin-bottom: 18px;
+    padding: 14px;
+  }
+
+  .chrva-schedule__controls label {
+    display: grid;
+    gap: 6px;
+    margin: 0;
+  }
+
+  .chrva-schedule__controls span {
+    color: var(--chrva-muted);
+    font-size: 12px;
+    font-weight: 700;
+    text-transform: uppercase;
+  }
+
+  .chrva-schedule__controls select {
+    appearance: auto;
+    background: #fff;
+    border: 1px solid #b9c4d3;
+    color: var(--chrva-ink);
+    font: inherit;
+    font-size: 15px;
+    min-height: 42px;
+    padding: 8px 10px;
+    width: 100%;
+  }
+
+  .chrva-schedule__bulk-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    justify-content: flex-end;
+    margin: -4px 0 12px;
+  }
+
+  .chrva-schedule__bulk-actions button,
+  .chrva-schedule__month-toggle {
+    background: #fff;
+    border: 1px solid #b9c4d3;
+    color: var(--chrva-ink);
+    cursor: pointer;
+    font: inherit;
+    font-size: 14px;
+    font-weight: 800;
+    min-height: 38px;
+    padding: 8px 12px;
+  }
+
+  .chrva-schedule__bulk-actions button:hover,
+  .chrva-schedule__month-toggle:hover {
+    border-color: var(--chrva-red);
+    color: var(--chrva-red-dark);
+  }
+
+  .chrva-schedule__table-wrap {
+    border: 1px solid var(--chrva-line);
+    overflow-x: auto;
+  }
+
+  .chrva-schedule__table {
+    border-collapse: collapse;
+    min-width: 980px;
+    width: 100%;
+  }
+
+  .chrva-schedule__table th {
+    background: var(--chrva-blue);
+    color: #fff;
+    font-size: 12px;
+    letter-spacing: 0;
+    padding: 12px 10px;
+    text-align: left;
+    text-transform: uppercase;
+    white-space: nowrap;
+  }
+
+  .chrva-schedule__table td {
+    border-top: 1px solid var(--chrva-line);
+    padding: 13px 10px;
+    vertical-align: top;
+  }
+
+  .chrva-schedule__month-row td {
+    background: #eef3f8;
+    border-top: 2px solid var(--chrva-line);
+    padding: 0;
+  }
+
+  .chrva-schedule__month-toggle {
+    align-items: center;
+    background: transparent;
+    border: 0;
+    color: var(--chrva-ink);
+    display: flex;
+    justify-content: space-between;
+    min-height: 48px;
+    padding: 12px 14px;
+    text-align: left;
+    width: 100%;
+  }
+
+  .chrva-schedule__month-title {
+    font-size: 17px;
+    font-weight: 900;
+  }
+
+  .chrva-schedule__month-summary {
+    color: var(--chrva-muted);
+    font-size: 13px;
+    font-weight: 800;
+  }
+
+  .chrva-schedule__month-icon {
+    color: var(--chrva-red-dark);
+    font-size: 18px;
+    line-height: 1;
+    margin-left: 12px;
+  }
+
+  .chrva-schedule__event-row:nth-child(even) {
+    background: #fafbfd;
+  }
+
+  .chrva-schedule__date {
+    font-weight: 800;
+    white-space: nowrap;
+  }
+
+  .chrva-schedule__event {
+    font-weight: 800;
+  }
+
+  .chrva-schedule__meta {
+    color: var(--chrva-muted);
+    font-size: 13px;
+    margin-top: 3px;
+  }
+
+  .chrva-schedule__badge {
+    background: #edf3f8;
+    border: 1px solid #cedbea;
+    color: var(--chrva-blue);
+    display: inline-block;
+    font-size: 12px;
+    font-weight: 800;
+    line-height: 1.2;
+    padding: 5px 8px;
+    text-transform: uppercase;
+  }
+
+  .chrva-schedule__badge--men {
+    background: #eaf2f9;
+    border-color: #c9dceb;
+    color: var(--chrva-blue);
+  }
+
+  .chrva-schedule__badge--women {
+    background: #f8edf1;
+    border-color: #ebccd6;
+    color: var(--chrva-red-dark);
+  }
+
+  .chrva-schedule__badge--revco {
+    background: #eaf6f2;
+    border-color: #c7e1d7;
+    color: var(--chrva-green);
+  }
+
+  .chrva-schedule__links {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 7px;
+    min-width: 170px;
+  }
+
+  .chrva-schedule a {
+    color: var(--chrva-red-dark);
+    font-weight: 800;
+    text-decoration: underline;
+    text-decoration-thickness: 1px;
+    text-underline-offset: 3px;
+  }
+
+  .chrva-schedule__links a {
+    background: #fff;
+    border: 1px solid #d5bdc3;
+    color: var(--chrva-red-dark);
+    display: inline-flex;
+    font-size: 13px;
+    justify-content: center;
+    line-height: 1.2;
+    padding: 8px 10px;
+    text-align: center;
+    text-decoration: none;
+  }
+
+  .chrva-schedule__cards {
+    display: none;
+  }
+
+  .chrva-schedule__empty {
+    background: var(--chrva-soft);
+    border: 1px solid var(--chrva-line);
+    color: var(--chrva-muted);
+    display: none;
+    font-weight: 700;
+    padding: 18px;
+    text-align: center;
+  }
+
+  @media (max-width: 760px) {
+    .chrva-schedule__header {
+      align-items: start;
+      display: grid;
+    }
+
+    .chrva-schedule h2 {
+      font-size: 24px;
+    }
+
+    .chrva-schedule__count {
+      white-space: normal;
+    }
+
+    .chrva-schedule__controls {
+      grid-template-columns: 1fr;
+    }
+
+    .chrva-schedule__controls label {
+      min-width: 0;
+    }
+
+    .chrva-schedule__controls select {
+      font-size: 13px;
+      line-height: 1.2;
+      min-height: 40px;
+      padding: 7px 8px;
+      text-overflow: ellipsis;
+    }
+
+    .chrva-schedule__table-wrap {
+      display: none;
+    }
+
+    .chrva-schedule__bulk-actions {
+      justify-content: stretch;
+    }
+
+    .chrva-schedule__bulk-actions button {
+      flex: 1 1 130px;
+    }
+
+    .chrva-schedule__cards {
+      display: grid;
+      gap: 12px;
+    }
+
+    .chrva-schedule__month-section {
+      border: 1px solid var(--chrva-line);
+      background: #fff;
+    }
+
+    .chrva-schedule__month-section .chrva-schedule__month-toggle {
+      background: #eef3f8;
+    }
+
+    .chrva-schedule__month-cards {
+      display: grid;
+      gap: 12px;
+      padding: 12px;
+    }
+
+    .chrva-schedule__card {
+      background: var(--chrva-card);
+      border: 1px solid var(--chrva-line);
+      border-left: 5px solid var(--chrva-red);
+      padding: 14px;
+    }
+
+    .chrva-schedule__month-section .chrva-schedule__card {
+      border-right: 0;
+      border-top: 0;
+      border-bottom: 0;
+    }
+
+    .chrva-schedule__card-top {
+      align-items: start;
+      display: flex;
+      gap: 10px;
+      justify-content: space-between;
+      margin-bottom: 10px;
+    }
+
+    .chrva-schedule__card h3 {
+      color: var(--chrva-ink);
+      font-size: 18px;
+      line-height: 1.2;
+      margin: 4px 0 0;
+    }
+
+    .chrva-schedule__card-grid {
+      display: grid;
+      gap: 8px;
+      grid-template-columns: 1fr 1fr;
+      margin: 12px 0;
+    }
+
+    .chrva-schedule__card-field {
+      border-top: 1px solid var(--chrva-line);
+      padding-top: 8px;
+    }
+
+    .chrva-schedule__card-field span {
+      color: var(--chrva-muted);
+      display: block;
+      font-size: 11px;
+      font-weight: 800;
+      margin-bottom: 2px;
+      text-transform: uppercase;
+    }
+  }
+
+  @media (max-width: 440px) {
+    .chrva-schedule__card-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>
+
+<script>
+  (function () {
+    var root = document.querySelector("[data-chrva-adult-schedule]");
+    if (!root) return;
+
+    var csv = 'Date,DIV,# Registered,# TEAMS,COST ($),HOST,NAME ,Register By,LOCATION,Reg. Links,Free Agents\n' +
+      '"Sat, Sep 26",RevCo 4s,"",10,160,CHRVA,Fall Brawl Fours,"Wed, Sep 23",North Laurel Community Center,"<a href=""https://www.advancedeventsystems.com/events/"" target=""_blank"">AES (coming soon)</a><br>or<br><a href=""https://form.jotform.com/252665654454162"" target=_blank>One Day Team Form</a>","<a href=""https://www.chrva.org/free-agents?event=fall_brawl_fours"" target=""_blank"">Free Agents</a>"\n' +
+      '"Sat, Oct 17",RevCo 4s,"",10,160,CHRVA,Blocktoberfest,"Wed, Oct 14",Gary J Arthur Community Center,"<a href=""https://www.advancedeventsystems.com/events/"" target=""_blank"">AES (coming soon)</a><br>or<br><a href=""https://form.jotform.com/252665654454162"" target=_blank>One Day Team Form</a>","<a href=""https://www.chrva.org/free-agents?event=Blocktoberfest"" target=_blank"">Free Agents</a>"\n' +
+      '"Sat, Oct 31",RevCo 4s,"",15,160,CHRVA,Frightful Fours,"Wed, Oct 28",Athletic Performance Inc,"<a href=""https://www.advancedeventsystems.com/events/"" target=""_blank"">AES (coming soon)</a><br>or<br><a href=""https://form.jotform.com/252665654454162"" target=_blank>One Day Team Form</a>","<a href=""https://www.chrva.org/free-agents?event=Frightful Fours"" target=_blank"">Free Agents</a>"\n' +
+      '"Sat, Nov 14",RevCo 4s,"",10,160,CHRVA,The Harvest Showdown**,"Wed, Nov 11",Albert Einstein High School,"<a href=""https://www.advancedeventsystems.com/events/"" target=""_blank"">AES (coming soon)</a><br>or<br><a href=""https://form.jotform.com/252665654454162"" target=_blank>One Day Team Form</a>","<a href=""https://www.chrva.org/free-agents?event=The Harvest Showdown"" target=_blank"">Free Agents</a>"\n' +
+      '"Sun, Nov 22",Mens 6s & Womens 6s,"",40,280,OC Volleyball,OC x CHRVA,"Wed, Nov 19",UMD Armory & Richie Coliseum,"<a href=""https://www.advancedeventsystems.com/events/"" target=""_blank"">AES (coming soon)</a><br>or<br><a href=""https://form.jotform.com/252665654454162"" target=_blank>One Day Team Form</a>","<a href=""https://www.chrva.org/free-agents?event=OC x CHRVA"" target=_blank"">Free Agents</a>"\n' +
+      '"Sat, Nov 28",Mens 6s A/AA,"",5,200,CHRVA,Volley Banquet Bash,"Wed, Nov 25",North Laurel Community Center,"<a href=""https://www.advancedeventsystems.com/events/"" target=""_blank"">AES (coming soon)</a><br>or<br><a href=""https://form.jotform.com/252665654454162"" target=_blank>One Day Team Form</a>","<a href=""https://www.chrva.org/free-agents?event=Volley Banquet Bash"" target=_blank"">Free Agents</a>"\n' +
+      '"Sat, Nov 28",Mens 6s B/BB,"",5,200,CHRVA,Volley Banquet Bash,"Wed, Nov 25",North Laurel Community Center,"<a href=""https://www.advancedeventsystems.com/events/"" target=""_blank"">AES (coming soon)</a><br>or<br><a href=""https://form.jotform.com/252665654454162"" target=_blank>One Day Team Form</a>","<a href=""https://www.chrva.org/free-agents?event=Volley Banquet Bash"" target=_blank"">Free Agents</a>"\n' +
+      '"Sun, Nov 29",Womens 6s A/AA,"",5,200,CHRVA,Volley Banquet Bash,"Thurs, Nov 26",North Laurel Community Center,"<a href=""https://www.advancedeventsystems.com/events/"" target=""_blank"">AES (coming soon)</a><br>or<br><a href=""https://form.jotform.com/252665654454162"" target=_blank>One Day Team Form</a>","<a href=""https://www.chrva.org/free-agents?event=Volley Banquet Bash"" target=_blank"">Free Agents</a>"\n' +
+      '"Sun, Nov 29",Womens 6s B/BB,"",5,200,CHRVA,Volley Banquet Bash,"Thurs, Nov 26",North Laurel Community Center,"<a href=""https://www.advancedeventsystems.com/events/"" target=""_blank"">AES (coming soon)</a><br>or<br><a href=""https://form.jotform.com/252665654454162"" target=_blank>One Day Team Form</a>","<a href=""https://www.chrva.org/free-agents?event=Volley Banquet Bash"" target=_blank"">Free Agents</a>"\n' +
+      '"Sun, Dec 13",RevCo 4s,"",15,160,CHRVA,Festive Fours,"Wed, Dec 9",Blair Montgomery High School,"<a href=""https://www.advancedeventsystems.com/events/"" target=""_blank"">AES (coming soon)</a><br>or<br><a href=""https://form.jotform.com/252665654454162"" target=_blank>One Day Team Form</a>","<a href=""https://www.chrva.org/free-agents?event=Festive Fours"" target=_blank"">Free Agents</a>"\n' +
+      '"Sat, Dec 19",Womens 6s A/AA,"",10,280,CHRVA,Winter Bump-a-Looza*,"Wed, Dec 16",Rockville Sportsplex,"<a href=""https://www.advancedeventsystems.com/events/"" target=""_blank"">AES (coming soon)</a><br>or<br><a href=""https://form.jotform.com/252665654454162"" target=_blank>One Day Team Form</a>","<a href=""https://www.chrva.org/free-agents?event=Winter Bump-a-Looza"" target=_blank"">Free Agents</a>"\n' +
+      '"Sat, Dec 19",Womens 6s B/BB,"",5,280,CHRVA,Winter Bump-a-Looza*,"Wed, Dec 16",Rockville Sportsplex,"<a href=""https://www.advancedeventsystems.com/events/"" target=""_blank"">AES (coming soon)</a><br>or<br><a href=""https://form.jotform.com/252665654454162"" target=_blank>One Day Team Form</a>","<a href=""https://www.chrva.org/free-agents?event=Winter Bump-a-Looza"" target=_blank"">Free Agents</a>"\n' +
+      '"Sun, Dec 20",Mens 6s A/AA,"",10,280,CHRVA,Winter Bump-a-Looza,"Thurs, Dec 17",Rockville Sportsplex,"<a href=""https://www.advancedeventsystems.com/events/"" target=""_blank"">AES (coming soon)</a><br>or<br><a href=""https://form.jotform.com/252665654454162"" target=_blank>One Day Team Form</a>","<a href=""https://www.chrva.org/free-agents?event=Winter Bump-a-Looza"" target=_blank"">Free Agents</a>"\n' +
+      '"Sun, Dec 20",Mens 6s B/BB,"",5,280,CHRVA,Winter Bump-a-Looza,"Thurs, Dec 17",Rockville Sportsplex,"<a href=""https://www.advancedeventsystems.com/events/"" target=""_blank"">AES (coming soon)</a><br>or<br><a href=""https://form.jotform.com/252665654454162"" target=_blank>One Day Team Form</a>","<a href=""https://www.chrva.org/free-agents?event=Winter Bump-a-Looza"" target=_blank"">Free Agents</a>"\n' +
+      '"Sun, Jan 10",Womens 6s A/AA,"",5,280,CHRVA,Countdown Classic,"Thurs, Jan 7",FVBC,"<a href=""https://www.advancedeventsystems.com/events/"" target=""_blank"">AES (coming soon)</a><br>or<br><a href=""https://form.jotform.com/252665654454162"" target=_blank>One Day Team Form</a>","<a href=""https://www.chrva.org/free-agents?event=Countdown Classic"" target=_blank"">Free Agents</a>"\n' +
+      '"Sun, Jan 10",Womens 6s B/BB,"",5,280,CHRVA,Countdown Classic,"Thurs, Jan 7",FVBC,"<a href=""https://www.advancedeventsystems.com/events/"" target=""_blank"">AES (coming soon)</a><br>or<br><a href=""https://form.jotform.com/252665654454162"" target=_blank>One Day Team Form</a>","<a href=""https://www.chrva.org/free-agents?event=Countdown Classic"" target=_blank"">Free Agents</a>"\n' +
+      '"Sun, Jan 10",Mens 6s B/BB,"",5,280,CHRVA,Countdown Classic,"Thurs, Jan 7",FVBC,"<a href=""https://www.advancedeventsystems.com/events/"" target=""_blank"">AES (coming soon)</a><br>or<br><a href=""https://form.jotform.com/252665654454162"" target=_blank>One Day Team Form</a>","<a href=""https://www.chrva.org/free-agents?event=Countdown Classic"" target=_blank"">Free Agents</a>"\n' +
+      '"Sun, Jan 10",Mens 6s A/AA,"",5,280,CHRVA,Countdown Classic,"Thurs, Jan 7",FVBC,"<a href=""https://www.advancedeventsystems.com/events/"" target=""_blank"">AES (coming soon)</a><br>or<br><a href=""https://form.jotform.com/252665654454162"" target=_blank>One Day Team Form</a>","<a href=""https://www.chrva.org/free-agents?event=Countdown Classic"" target=_blank"">Free Agents</a>"\n' +
+      '"Sun, Jan 24",RevCo 4s,"",10,160,CHRVA,Frostbite Fours,"Wed, Jan 20",Blair Montgomery High School,"<a href=""https://www.advancedeventsystems.com/events/"" target=""_blank"">AES (coming soon)</a><br>or<br><a href=""https://form.jotform.com/252665654454162"" target=_blank>One Day Team Form</a>","<a href=""https://www.chrva.org/free-agents?event=Frostbite Fours"" target=_blank"">Free Agents</a>"\n' +
+      '"Sat, Jan 30",Womens A/AA,"",15,280,CHRVA,Icebreaker,"Wed, Jan 27",Holy Trinity,"<a href=""https://www.advancedeventsystems.com/events/"" target=""_blank"">AES (coming soon)</a><br>or<br><a href=""https://form.jotform.com/252665654454162"" target=_blank>One Day Team Form</a>","<a href=""https://www.chrva.org/free-agents?event=Icebreaker"" target=_blank"">Free Agents</a>"\n' +
+      '"Sun, Jan 31",Womens B/BB,"",15,280,CHRVA,Icebreaker,"Wed, Jan 27",Holy Trinity,"<a href=""https://www.advancedeventsystems.com/events/"" target=""_blank"">AES (coming soon)</a><br>or<br><a href=""https://form.jotform.com/252665654454162"" target=_blank>One Day Team Form</a>","<a href=""https://www.chrva.org/free-agents?event=Icebreaker"" target=_blank"">Free Agents</a>"\n' +
+      '"Sat, Feb 6",Mens,"",15,280,CHRVA,Final Freeze,"Wed, Feb 3",Holy Trinity,"<a href=""https://www.advancedeventsystems.com/events/"" target=""_blank"">AES (coming soon)</a><br>or<br><a href=""https://form.jotform.com/252665654454162"" target=_blank>One Day Team Form</a>","<a href=""https://www.chrva.org/free-agents?event=Final Freeze"" target=_blank"">Free Agents</a>"\n' +
+      '"Sat, Feb 13",RevCo 4s,"",15,160,CHRVA,Valentine Volley,"Wed, Feb 10",MD County School,"<a href=""https://www.advancedeventsystems.com/events/"" target=""_blank"">AES (coming soon)</a><br>or<br><a href=""https://form.jotform.com/252665654454162"" target=_blank>One Day Team Form</a>","<a href=""https://www.chrva.org/free-agents?event=Valentine Volley"" target=_blank"">Free Agents</a>"\n' +
+      '"Sat, Feb 20",Womens,"",15,280,CHRVA,Frostbreaker Showdown,"Wed, Feb 17",NVVA,"<a href=""https://www.advancedeventsystems.com/events/"" target=""_blank"">AES (coming soon)</a><br>or<br><a href=""https://form.jotform.com/252665654454162"" target=_blank>One Day Team Form</a>","<a href=""https://www.chrva.org/free-agents?event=Frostbreaker Showdown"" target=_blank"">Free Agents</a>"\n' +
+      '"Sat, Feb 20",Mens,"",10,280,CHRVA,Frostbreaker Showdown,"Wed, Feb 17",NVVA,"<a href=""https://www.advancedeventsystems.com/events/"" target=""_blank"">AES (coming soon)</a><br>or<br><a href=""https://form.jotform.com/252665654454162"" target=_blank>One Day Team Form</a>","<a href=""https://www.chrva.org/free-agents?event=Frostbreaker Showdown"" target=_blank"">Free Agents</a>"\n' +
+      '"Sat, Mar 6",Womens B/BB,"",10,280,CHRVA,March Madness at the Net,"Wed, Mar 3",Holy Trinity,"<a href=""https://www.advancedeventsystems.com/events/"" target=""_blank"">AES (coming soon)</a><br>or<br><a href=""https://form.jotform.com/252665654454162"" target=_blank>One Day Team Form</a>","<a href=""https://www.chrva.org/free-agents?event=March Madness at the Net"" target=_blank"">Free Agents</a>"\n' +
+      '"Sun, Mar 7",Mens B/BB,"",10,280,CHRVA,March Madness at the Net,"Thurs, Mar 4",Holy Trinity,"<a href=""https://www.advancedeventsystems.com/events/"" target=""_blank"">AES (coming soon)</a><br>or<br><a href=""https://form.jotform.com/252665654454162"" target=_blank>One Day Team Form</a>","<a href=""https://www.chrva.org/free-agents?event=March Madness at the Net"" target=_blank"">Free Agents</a>"\n' +
+      '"Sat, Mar 13",RevCo 4s,"",15,160,CHRVA,Forever Fours,"Wed, Mar 10",MD County School,"<a href=""https://www.advancedeventsystems.com/events/"" target=""_blank"">AES (coming soon)</a><br>or<br><a href=""https://form.jotform.com/252665654454162"" target=_blank>One Day Team Form</a>","<a href=""https://www.chrva.org/free-agents?event=Forever Fours"" target=_blank"">Free Agents</a>"\n' +
+      '"Sat, Mar 27",All,"",TBD,300,CHRVA,Regional Championships,"Wed, Mar 24",Adventist Healthcare (Discovery),"<a href=""https://www.advancedeventsystems.com/events/"" target=""_blank"">AES (coming soon)</a><br>or<br><a href=""https://form.jotform.com/252665654454162"" target=_blank>One Day Team Form</a>","<a href=""https://www.chrva.org/free-agents?event=Regional Championships"" target=_blank"">Free Agents</a>"\n' +
+      '"Sat, Apr 10",RevCo 4s,"",15,160,CHRVA,Showery Fours**,"Wed, Apr 7",Blair Montgomery High School,"<a href=""https://www.advancedeventsystems.com/events/"" target=""_blank"">AES (coming soon)</a><br>or<br><a href=""https://form.jotform.com/252665654454162"" target=_blank>One Day Team Form</a>","<a href=""https://www.chrva.org/free-agents?event=Showery Fours"" target=_blank"">Free Agents</a>"\n' +
+      '"Sat, Apr 24",Womens A/AA,"",5,280,CHRVA,Post Season Fun,"Wed, Apr 21",FVBC,"<a href=""https://www.advancedeventsystems.com/events/"" target=""_blank"">AES (coming soon)</a><br>or<br><a href=""https://form.jotform.com/252665654454162"" target=_blank>One Day Team Form</a>","<a href=""https://www.chrva.org/free-agents?event=Post Season Fun"" target=_blank"">Free Agents</a>"\n' +
+      '"Sat, Apr 24",Womens B/BB,"",10,280,CHRVA,Post Season Fun,"Wed, Apr 21",FVBC,"<a href=""https://www.advancedeventsystems.com/events/"" target=""_blank"">AES (coming soon)</a><br>or<br><a href=""https://form.jotform.com/252665654454162"" target=_blank>One Day Team Form</a>","<a href=""https://www.chrva.org/free-agents?event=Post Season Fun"" target=_blank"">Free Agents</a>"\n' +
+      '"Sat, Apr 24",Mens A/AA,"",5,280,CHRVA,Post Season Fun,"Wed, Apr 21",FVBC,"<a href=""https://www.advancedeventsystems.com/events/"" target=""_blank"">AES (coming soon)</a><br>or<br><a href=""https://form.jotform.com/252665654454162"" target=_blank>One Day Team Form</a>","<a href=""https://www.chrva.org/free-agents?event=Post Season Fun"" target=_blank"">Free Agents</a>"\n' +
+      '"Sat, Apr 24",Mens B/BB,"",10,280,CHRVA,Post Season Fun,"Wed, Apr 21",FVBC,"<a href=""https://www.advancedeventsystems.com/events/"" target=""_blank"">AES (coming soon)</a><br>or<br><a href=""https://form.jotform.com/252665654454162"" target=_blank>One Day Team Form</a>","<a href=""https://www.chrva.org/free-agents?event=Post Season Fun"" target=_blank"">Free Agents</a>"\n' +
+      '"Sat, May 1",Mens Day 1,"",20,450,CHRVA,Nationals Warm-Up Day 1,"Wed, Apr 28",The St. James,"<a href=""https://www.advancedeventsystems.com/events/"" target=""_blank"">AES (coming soon)</a><br>or<br><a href=""https://form.jotform.com/252665654454162"" target=_blank>One Day Team Form</a>","<a href=""https://www.chrva.org/free-agents?event=Nationals Warm-Up Day 1"" target=_blank"">Free Agents</a>"\n' +
+      '"Sun, May 2",Mens Day 2,"",--,--,CHRVA,Nationals Warm-Up Day 2,"Thurs, Apr 29",The St. James,"<a href=""https://www.advancedeventsystems.com/events/"" target=""_blank"">AES (coming soon)</a><br>or<br><a href=""https://form.jotform.com/252665654454162"" target=_blank>One Day Team Form</a>","<a href=""https://www.chrva.org/free-agents?event=Nationals Warm-Up Day 2"" target=_blank"">Free Agents</a>"\n' +
+      '"Sat, May 8",RevCo 4s,"",15,160,CHRVA,Flowery Fours**,"Wed, May 5",Blair Montgomery High School,"<a href=""https://www.advancedeventsystems.com/events/"" target=""_blank"">AES (coming soon)</a><br>or<br><a href=""https://form.jotform.com/252665654454162"" target=_blank>One Day Team Form</a>","<a href=""https://www.chrva.org/free-agents?event=Flowery Fours"" target=_blank"">Free Agents</a>"\n' +
+      '"Sat, May 15",First Come First Serve,"",15,280,CHRVA,Nationals Prep,"Wed, May 12",MD County School,"<a href=""https://www.advancedeventsystems.com/events/"" target=""_blank"">AES (coming soon)</a><br>or<br><a href=""https://form.jotform.com/252665654454162"" target=_blank>One Day Team Form</a>","<a href=""https://www.chrva.org/free-agents?event=Nationals Prep"" target=_blank"">Free Agents</a>"\n' +
+      '"Friday, May 28 - June 3rd",ALL (Big),"",ALL,900,USAV,USAV Nationals,TBD,Chicago,"<a href=""https://www.advancedeventsystems.com/events/"" target=""_blank"">AES (coming soon)</a><br>or<br><a href=""https://form.jotform.com/252665654454162"" target=_blank>One Day Team Form</a>",Not Allowed';
+
+    var monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+    var monthLabels = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+    var monthIndex = {};
+    monthNames.forEach(function (name, index) { monthIndex[name.toLowerCase()] = index; });
+
+    var rowsEl = root.querySelector("[data-schedule-rows]");
+    var cardsEl = root.querySelector("[data-schedule-cards]");
+    var monthFilter = root.querySelector("[data-month-filter]");
+    var typeFilter = root.querySelector("[data-type-filter]");
+    var sortOrder = root.querySelector("[data-sort-order]");
+    var countEl = root.querySelector("[data-count]");
+    var emptyEl = root.querySelector("[data-empty-state]");
+    var expandAllButton = root.querySelector("[data-expand-all]");
+    var collapseAllButton = root.querySelector("[data-collapse-all]");
+    var collapsedMonths = {};
+
+    function parseCsv(text) {
+      var rows = [];
+      var row = [];
+      var value = "";
+      var quoted = false;
+
+      for (var i = 0; i < text.length; i++) {
+        var char = text[i];
+        var next = text[i + 1];
+
+        if (char === '"' && quoted && next === '"') {
+          value += '"';
+          i++;
+        } else if (char === '"') {
+          quoted = !quoted;
+        } else if (char === "," && !quoted) {
+          row.push(value);
+          value = "";
+        } else if ((char === "\n" || char === "\r") && !quoted) {
+          if (char === "\r" && next === "\n") i++;
+          row.push(value);
+          rows.push(row);
+          row = [];
+          value = "";
+        } else {
+          value += char;
+        }
+      }
+
+      row.push(value);
+      rows.push(row);
+      return rows;
+    }
+
+    function eventDateValue(dateText, year) {
+      var match = dateText.match(/\b(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*\s+(\d{1,2})/i);
+      if (!match) return new Date(year, 0, 1).getTime();
+      return new Date(year, monthIndex[match[1].slice(0, 3).toLowerCase()], Number(match[2])).getTime();
+    }
+
+    function eventMonth(dateText, dateValue) {
+      var match = dateText.match(/\b(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*/i);
+      var index = match ? monthIndex[match[1].slice(0, 3).toLowerCase()] : new Date(dateValue).getMonth();
+      return {
+        key: String(index),
+        label: monthLabels[index]
+      };
+    }
+
+    function seasonYearForDate(dateText) {
+      var match = dateText.match(/\b(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*/i);
+      if (!match) return 2026;
+
+      var month = monthIndex[match[1].slice(0, 3).toLowerCase()];
+      return month >= 8 ? 2026 : 2027;
+    }
+
+    function categoriesFor(division) {
+      var value = division.toLowerCase();
+      var categories = [];
+      if (/\bmens\b|\bmen\b/.test(value)) categories.push("men");
+      if (/\bwomens\b|\bwomen\b/.test(value)) categories.push("women");
+      if (value.indexOf("revco") !== -1) categories.push("revco");
+      return categories;
+    }
+
+    function badgeClass(item) {
+      if (item.categories.indexOf("revco") !== -1) return "chrva-schedule__badge chrva-schedule__badge--revco";
+      if (item.categories.indexOf("women") !== -1 && item.categories.indexOf("men") === -1) return "chrva-schedule__badge chrva-schedule__badge--women";
+      if (item.categories.indexOf("men") !== -1) return "chrva-schedule__badge chrva-schedule__badge--men";
+      return "chrva-schedule__badge";
+    }
+
+    function normalizeLinks(html, freeAgents) {
+      var wrap = document.createElement("div");
+      wrap.innerHTML = html || "";
+      var anchors = Array.prototype.slice.call(wrap.querySelectorAll("a"));
+      var pieces = anchors.map(function (anchor) { return anchor.outerHTML; });
+
+      if (freeAgents && freeAgents.toLowerCase() !== "not allowed") {
+        var free = document.createElement("div");
+        free.innerHTML = freeAgents;
+        pieces = pieces.concat(Array.prototype.slice.call(free.querySelectorAll("a")).map(function (anchor) {
+          return anchor.outerHTML;
+        }));
+      } else if (freeAgents) {
+        pieces.push("<span>" + escapeHtml(freeAgents) + "</span>");
+      }
+
+      return pieces.join("");
+    }
+
+    function escapeHtml(value) {
+      return String(value || "")
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+    }
+
+    function money(value) {
+      if (!value || value === "--" || value.toUpperCase() === "TBD") return value || "TBD";
+      return "$" + value;
+    }
+
+    function buildData() {
+      var parsed = parseCsv(csv);
+
+      return parsed.slice(1).reduce(function (items, row) {
+        if (!row[0] || row.join("").trim() === "") return items;
+        if (/^\d{4}$/.test(row[0])) return items;
+
+        var year = seasonYearForDate(row[0]);
+        var dateValue = eventDateValue(row[0], year);
+        var month = eventMonth(row[0], dateValue);
+        items.push({
+          date: row[0],
+          division: row[1],
+          teams: row[3],
+          cost: row[4],
+          host: row[5],
+          name: row[6],
+          registerBy: row[7],
+          location: row[8],
+          links: normalizeLinks(row[9], row[10]),
+          year: year,
+          dateValue: dateValue,
+          monthKey: month.key,
+          monthLabel: month.label,
+          categories: categoriesFor(row[1])
+        });
+
+        return items;
+      }, []);
+    }
+
+    var schedule = buildData();
+
+    function populateMonths() {
+      var seen = {};
+      schedule
+        .slice()
+        .sort(function (a, b) { return a.dateValue - b.dateValue; })
+        .forEach(function (item) {
+          if (seen[item.year + "-" + item.monthKey]) return;
+          seen[item.year + "-" + item.monthKey] = true;
+          var option = document.createElement("option");
+          option.value = item.year + "-" + item.monthKey;
+          option.textContent = item.monthLabel + " " + item.year;
+          monthFilter.appendChild(option);
+        });
+    }
+
+    function render() {
+      var selectedMonth = monthFilter.value;
+      var selectedType = typeFilter.value;
+      var direction = sortOrder.value === "desc" ? -1 : 1;
+      var filtered = schedule
+        .filter(function (item) {
+          var monthMatch = selectedMonth === "all" || selectedMonth === item.year + "-" + item.monthKey;
+          var typeMatch = selectedType === "all" || item.categories.indexOf(selectedType) !== -1;
+          return monthMatch && typeMatch;
+        })
+        .sort(function (a, b) { return (a.dateValue - b.dateValue) * direction; });
+      var groups = groupByMonth(filtered);
+
+      rowsEl.innerHTML = groups.map(tableGroup).join("");
+      cardsEl.innerHTML = groups.map(cardGroup).join("");
+      countEl.textContent = filtered.length + " of " + schedule.length + " events shown";
+      emptyEl.style.display = filtered.length ? "none" : "block";
+    }
+
+    function groupByMonth(items) {
+      return items.reduce(function (groups, item) {
+        var id = item.year + "-" + item.monthKey;
+        var group = groups.length ? groups[groups.length - 1] : null;
+        if (!group || group.id !== id) {
+          group = {
+            id: id,
+            label: item.monthLabel + " " + item.year,
+            items: []
+          };
+          groups.push(group);
+        }
+        group.items.push(item);
+        return groups;
+      }, []);
+    }
+
+    function tableGroup(group) {
+      var collapsed = !!collapsedMonths[group.id];
+      return monthTableHeader(group, collapsed) + (collapsed ? "" : group.items.map(tableRow).join(""));
+    }
+
+    function monthTableHeader(group, collapsed) {
+      return "<tr class=\"chrva-schedule__month-row\"><td colspan=\"8\">" +
+        "<button type=\"button\" class=\"chrva-schedule__month-toggle\" data-month-toggle=\"" + escapeHtml(group.id) + "\" aria-expanded=\"" + (!collapsed) + "\">" +
+        "<span><span class=\"chrva-schedule__month-title\">" + escapeHtml(group.label) + "</span> " +
+        "<span class=\"chrva-schedule__month-summary\">" + group.items.length + " event" + (group.items.length === 1 ? "" : "s") + "</span></span>" +
+        "<span class=\"chrva-schedule__month-icon\" aria-hidden=\"true\">" + (collapsed ? "+" : "-") + "</span>" +
+        "</button></td></tr>";
+    }
+
+    function cardGroup(group) {
+      var collapsed = !!collapsedMonths[group.id];
+      return "<section class=\"chrva-schedule__month-section\">" +
+        "<button type=\"button\" class=\"chrva-schedule__month-toggle\" data-month-toggle=\"" + escapeHtml(group.id) + "\" aria-expanded=\"" + (!collapsed) + "\">" +
+        "<span><span class=\"chrva-schedule__month-title\">" + escapeHtml(group.label) + "</span> " +
+        "<span class=\"chrva-schedule__month-summary\">" + group.items.length + " event" + (group.items.length === 1 ? "" : "s") + "</span></span>" +
+        "<span class=\"chrva-schedule__month-icon\" aria-hidden=\"true\">" + (collapsed ? "+" : "-") + "</span>" +
+        "</button>" +
+        (collapsed ? "" : "<div class=\"chrva-schedule__month-cards\">" + group.items.map(card).join("") + "</div>") +
+        "</section>";
+    }
+
+    function tableRow(item) {
+      return "<tr class=\"chrva-schedule__event-row\">" +
+        "<td><div class=\"chrva-schedule__date\">" + escapeHtml(item.date) + "</div><div class=\"chrva-schedule__meta\">" + item.year + "</div></td>" +
+        "<td><div class=\"chrva-schedule__event\">" + escapeHtml(item.name) + "</div><div class=\"chrva-schedule__meta\">" + escapeHtml(item.host) + "</div></td>" +
+        "<td><span class=\"" + badgeClass(item) + "\">" + escapeHtml(item.division) + "</span></td>" +
+        "<td>" + escapeHtml(item.teams || "TBD") + "</td>" +
+        "<td>" + escapeHtml(money(item.cost)) + "</td>" +
+        "<td>" + escapeHtml(item.location) + "</td>" +
+        "<td>" + escapeHtml(item.registerBy || "TBD") + "</td>" +
+        "<td><div class=\"chrva-schedule__links\">" + item.links + "</div></td>" +
+        "</tr>";
+    }
+
+    function card(item) {
+      return "<article class=\"chrva-schedule__card\">" +
+        "<div class=\"chrva-schedule__card-top\"><div><div class=\"chrva-schedule__date\">" + escapeHtml(item.date) + " " + item.year + "</div><h3>" + escapeHtml(item.name) + "</h3></div><span class=\"" + badgeClass(item) + "\">" + escapeHtml(item.division) + "</span></div>" +
+        "<div class=\"chrva-schedule__card-field\"><span>Location</span>" + escapeHtml(item.location) + "</div>" +
+        "<div class=\"chrva-schedule__card-grid\">" +
+        "<div class=\"chrva-schedule__card-field\"><span>Teams</span>" + escapeHtml(item.teams || "TBD") + "</div>" +
+        "<div class=\"chrva-schedule__card-field\"><span>Cost</span>" + escapeHtml(money(item.cost)) + "</div>" +
+        "<div class=\"chrva-schedule__card-field\"><span>Register By</span>" + escapeHtml(item.registerBy || "TBD") + "</div>" +
+        "<div class=\"chrva-schedule__card-field\"><span>Host</span>" + escapeHtml(item.host) + "</div>" +
+        "</div><div class=\"chrva-schedule__links\">" + item.links + "</div></article>";
+    }
+
+    populateMonths();
+    render();
+    root.addEventListener("click", function (event) {
+      var toggle = event.target.closest ? event.target.closest("[data-month-toggle]") : null;
+      if (!toggle || !root.contains(toggle)) return;
+      var id = toggle.getAttribute("data-month-toggle");
+      collapsedMonths[id] = !collapsedMonths[id];
+      render();
+    });
+    expandAllButton.addEventListener("click", function () {
+      collapsedMonths = {};
+      render();
+    });
+    collapseAllButton.addEventListener("click", function () {
+      schedule.forEach(function (item) {
+        collapsedMonths[item.year + "-" + item.monthKey] = true;
+      });
+      render();
+    });
+    monthFilter.addEventListener("change", render);
+    typeFilter.addEventListener("change", render);
+    sortOrder.addEventListener("change", render);
+  })();
+</script>

@@ -27,6 +27,10 @@
     {
       "source": "/api/teams",
       "destination": "/api/teams.py"
+    },
+    {
+      "source": "/api/player-points",
+      "destination": "/api/player-points.js"
     }
   ],
   "functions": {
