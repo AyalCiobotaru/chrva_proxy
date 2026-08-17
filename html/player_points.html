@@ -1,5 +1,5 @@
 <div class="chrva-player-points" data-player-points data-api-url="https://chrva-proxy.vercel.app/api/player-points">
-  <h2>RevCo Standings for 2026-2027 Season</h2>
+  <h2>RevCo Standings for 2026-2027 Season - Sample Data</h2>
 
   <div class="chrva-player-points__controls" aria-label="Standings controls">
     <div class="chrva-player-points__gender" aria-label="Gender standings filters">
@@ -344,7 +344,8 @@
     }
 
     function resultLine(result) {
-      var finish = result.finish ? " - " + escapeHtml(result.finish) : "";
+      var bracket = result.bracket ? escapeHtml(result.bracket) + " " : "";
+      var finish = result.finish ? " - " + bracket + escapeHtml(result.finish) : "";
       return "<div class=\"chrva-player-points__top-result\"><strong>" +
         escapeHtml(result.name || "Tournament") + "</strong>: " +
         escapeHtml(result.points || 0) + " pts" + finish + "</div>";
@@ -383,12 +384,13 @@
       }
 
       return "<div class=\"chrva-player-points__details\"><table>" +
-        "<thead><tr><th>Date</th><th>Tournament</th><th>Team</th><th>Points</th><th>Finish</th><th>Total Teams</th></tr></thead>" +
+        "<thead><tr><th>Date</th><th>Tournament</th><th>Team</th><th>Bracket</th><th>Points</th><th>Finish</th><th>Total Teams</th></tr></thead>" +
         "<tbody>" + results.map(function (result) {
           return "<tr>" +
             "<td>" + escapeHtml(formatDate(result.date)) + "</td>" +
             "<td>" + escapeHtml(result.name || "Tournament") + "</td>" +
             "<td>" + escapeHtml(teamText(result.team)) + "</td>" +
+            "<td>" + escapeHtml(result.bracket || "-") + "</td>" +
             "<td>" + escapeHtml(result.points || 0) + "</td>" +
             "<td>" + escapeHtml(result.finish || "-") + "</td>" +
             "<td>" + escapeHtml(result.total_teams || "-") + "</td>" +
