@@ -89,6 +89,15 @@ table.dataTable.dtr-inline.collapsed > tbody > tr.parent > td.control:before {
   const humanize = (s) =>
     (s || "").toString().replace(/[_-]+/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
 
+  const escapeHtml = (s) =>
+    (s || "")
+      .toString()
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "&#39;");
+
 // Parse gender out of event token. Returns 'men' | 'women' | null
 const parseGenderFromToken = (token) => {
   const t = normalize(token || "");
@@ -120,8 +129,11 @@ const parseGenderFromToken = (token) => {
   const splitTournamentItems = (val) => {
     if (!val) return [];
     return val
-      .split(/(?=(?:Sun|Mon|Tue|Wed|Thu|Fri|Sat),\s)/) // positive lookahead before weekday
-      .map((s) => s.trim())
+      .toString()
+      .replace(/<br\s*\/?>/gi, "\n")
+      .split(/\s*(?:\r?\n|;|\|)\s*/)
+      .flatMap((chunk) => chunk.split(/,\s*(?=(?:Sun|Mon|Tue|Wed|Thu|Fri|Sat),?\s+(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Sept|Oct|Nov|Dec)[\s-]+\d{1,2}(?:st|nd|rd|th)?\b)/i))
+      .map((s) => s.trim().replace(/,+$/, "").trim())
       .filter(Boolean);
   };
 
@@ -162,7 +174,7 @@ const parseGenderFromToken = (token) => {
     if (!items.length) return type === "display" ? "Not Provided" : "";
 
     if (type === "display") {
-      return items.map((x) => `<div>${x}</div>`).join("");
+      return items.map((x) => `<div>${escapeHtml(x)}</div>`).join("");
     }
     if (type === "filter" || type === "sort") {
       return items.join(" | ");
@@ -289,15 +301,20 @@ const parseGenderFromToken = (token) => {
             type: "column",
             target: "td.control",
             renderer: function (api, rowIdx, cols) {
-              // Use the rendered values so tournament lines show split/matching-only
+              const rowData = api.row(rowIdx).data();
               return (
                 cols
                   .filter((c) => c.hidden)
                   .map(
-                    (c) =>
-                      `<p><strong>${c.title}:</strong> ${
-                        (c.data !== undefined && c.data !== null && c.data !== "") ? c.data : "Not Provided"
-                      }</p>`
+                    (c) => {
+                      const isTournamentColumn = tournamentKey && c.title === tournamentKey;
+                      const value = isTournamentColumn
+                        ? renderTournamentList(rowData[tournamentKey], "display", baseEventToken, genderFilter)
+                        : ((c.data !== undefined && c.data !== null && c.data !== "")
+                          ? escapeHtml(c.data)
+                          : "Not Provided");
+                      return `<p><strong>${escapeHtml(c.title)}:</strong> ${value}</p>`;
+                    }
                   )
                   .join("") || "No additional info"
               );

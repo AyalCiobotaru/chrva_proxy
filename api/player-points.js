@@ -1,132 +1,21 @@
-import fetch from "node-fetch";
+import {
+  calculatePoints,
+  createCachedSheetFetcher,
+  firstQueryValue,
+  groupTeamsByTournament,
+  indexPlayers,
+  indexTournaments,
+  normalizeDate,
+  numberFor,
+  requestedSeason,
+  setCorsHeaders,
+  teamPlayerIds,
+  tournamentKey,
+  unwrapSheet
+} from "../lib/points-core.js";
 
-const ALLOWED_ORIGIN = "https://www.chrva.org";
 const RESULTS_URL = process.env.GS_PLAYER_POINTS_URL || process.env.GS_PLAYER_RESULTS_URL;
-const DEFAULT_SEASON = "2026";
-const ALLOWED_SEASONS = new Set(["2026", "2027"]);
 const SHEET_CACHE_TTL_MS = Number(process.env.PLAYER_POINTS_CACHE_TTL_MS || 5 * 60 * 1000);
-const TEAM_PLAYER_ID_COLUMNS = ["player1_id", "player2_id", "player3_id", "player4_id"];
-
-let cachedSheetPayload = null;
-let cachedSheetPayloadAt = 0;
-let pendingSheetPayload = null;
-
-function setCorsHeaders(res) {
-  res.setHeader("Access-Control-Allow-Origin", ALLOWED_ORIGIN);
-  res.setHeader("Access-Control-Allow-Credentials", "true");
-  res.setHeader("Access-Control-Allow-Methods", "GET,OPTIONS");
-  res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization");
-}
-
-function firstQueryValue(value) {
-  return Array.isArray(value) ? value[0] : value;
-}
-
-function requestedSeason(req) {
-  const season = String(firstQueryValue(req.query.season) || DEFAULT_SEASON).trim();
-  if (!ALLOWED_SEASONS.has(season)) {
-    throw new Error("season must be 2026 or 2027");
-  }
-  return season;
-}
-
-function numberFor(value) {
-  const parsed = Number(String(value ?? "").replace(/,/g, "").trim());
-  return Number.isFinite(parsed) ? parsed : 0;
-}
-
-const BASE_POINTS = {
-  GOLD: {
-    1: 200,
-    2: 170,
-    3: 145,
-    5: 120
-  },
-  SILVER: {
-    1: 100,
-    2: 85,
-    3: 70
-  },
-  DNMP: 40
-};
-
-function teamMultiplier(totalTeams) {
-  const teams = numberFor(totalTeams);
-  if (teams >= 4 && teams <= 5) return 0.6;
-  if (teams >= 6 && teams <= 7) return 0.7;
-  if (teams >= 8 && teams <= 9) return 0.8;
-  if (teams >= 10 && teams <= 12) return 0.9;
-  if (teams >= 13) return 1;
-  return 1;
-}
-
-function finishNumber(finish) {
-  const match = String(finish || "").match(/\d+/);
-  return match ? Number(match[0]) : 0;
-}
-
-function calculatePoints(result, tournament) {
-  const finish = String(result.finish || "").trim().toUpperCase();
-  if (finish === "DNMP") {
-    return {
-      points: BASE_POINTS.DNMP,
-      basePoints: BASE_POINTS.DNMP,
-      formula: `${BASE_POINTS.DNMP} x 100%`
-    };
-  }
-
-  const bracket = String(result.bracket || "").trim().toUpperCase();
-  const basePoints = BASE_POINTS[bracket]?.[finishNumber(finish)] || 0;
-  const multiplier = teamMultiplier(tournament?.total_teams);
-  return {
-    points: Math.round(basePoints * multiplier),
-    formula: `${basePoints} x ${Math.round(multiplier * 100)}%`
-  };
-}
-
-function normalizeDate(value) {
-  if (!value) return "";
-  const raw = String(value).trim();
-  if (/^\d{4}-\d{2}-\d{2}$/.test(raw)) return raw;
-
-  const parsed = new Date(raw);
-  if (Number.isNaN(parsed.getTime())) return raw;
-  return parsed.toISOString().slice(0, 10);
-}
-
-function unwrapSheet(payload, key) {
-  if (Array.isArray(payload?.[key])) return payload[key];
-  return [];
-}
-
-function tournamentKey(row) {
-  return `${String(row.season || "").trim()}::${String(row.tournament_id || "").trim()}`;
-}
-
-function indexTournaments(rows) {
-  return new Map(rows.map((row) => [tournamentKey(row), row]).filter(([key]) => !key.endsWith("::")));
-}
-
-function indexPlayers(rows) {
-  return new Map(
-    rows
-      .map((row) => [String(row.usav_member_id || "").trim(), row])
-      .filter(([usavMemberId]) => usavMemberId)
-  );
-}
-
-function groupTeamsByTournament(rows) {
-  const grouped = new Map();
-
-  for (const row of rows) {
-    const key = tournamentKey(row);
-    if (key.endsWith("::")) continue;
-    if (!grouped.has(key)) grouped.set(key, []);
-    grouped.get(key).push(row);
-  }
-
-  return grouped;
-}
 
 function normalizePayload(payload) {
   if (Array.isArray(payload)) {
@@ -139,10 +28,6 @@ function normalizePayload(payload) {
     results: unwrapSheet(payload, "Results"),
     teams: unwrapSheet(payload, "Teams")
   };
-}
-
-function teamPlayerIds(team) {
-  return TEAM_PLAYER_ID_COLUMNS.map((key) => String(team?.[key] || "").trim()).filter(Boolean);
 }
 
 function findTeamForResult(result, usavMemberId, teamsByTournament) {
@@ -183,7 +68,7 @@ function buildTournamentResult(result, tournament, team, playerIndex) {
     pointsFormula: pointCalculation.formula,
     total_teams: numberFor(tournament?.total_teams),
     finish: String(result.finish || "").trim(),
-    notes: String(result.Notes || "").trim(),
+    notes: String(result.Notes || result.notes || "").trim(),
     team: buildTeam(team, playerIndex)
   };
 }
@@ -213,35 +98,12 @@ function buildPlayerSummary(player, results, tournamentIndex, teamsByTournament,
   };
 }
 
+const fetchSheetPayload = createCachedSheetFetcher({
+  url: RESULTS_URL,
+  cacheTtlMs: SHEET_CACHE_TTL_MS,
+  errorLabel: "player results"
+});
 
-async function fetchSheetPayload() {
-  const now = Date.now();
-  if (cachedSheetPayload && now - cachedSheetPayloadAt < SHEET_CACHE_TTL_MS) {
-    return cachedSheetPayload;
-  }
-
-  if (pendingSheetPayload) {
-    return pendingSheetPayload;
-  }
-
-  pendingSheetPayload = fetch(RESULTS_URL)
-    .then((response) => {
-      if (!response.ok) {
-        throw new Error(`Failed to fetch player results: ${response.status}`);
-      }
-      return response.json();
-    })
-    .then((payload) => {
-      cachedSheetPayload = payload;
-      cachedSheetPayloadAt = Date.now();
-      return payload;
-    })
-    .finally(() => {
-      pendingSheetPayload = null;
-    });
-
-  return pendingSheetPayload;
-}
 function buildPlayerSummaries(payload, season) {
   const { players, tournaments, results, teams } = normalizePayload(payload);
   const seasonResults = results.filter((result) => String(result.season || "").trim() === season);

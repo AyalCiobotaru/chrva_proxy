@@ -31,6 +31,14 @@
     {
       "source": "/api/player-points",
       "destination": "/api/player-points.js"
+    },
+    {
+      "source": "/api/mens-teams",
+      "destination": "/api/mens-teams.js"
+    },
+    {
+      "source": "/api/womens-teams",
+      "destination": "/api/womens-teams.js"
     }
   ],
   "functions": {
