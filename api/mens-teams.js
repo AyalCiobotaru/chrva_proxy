@@ -45,6 +45,10 @@ function teamRecordClub(team) {
   return String(team.club || "").trim();
 }
 
+function teamRecordDivision(team) {
+  return String(team.division || "").trim();
+}
+
 function resultMatchesTeam(result, team) {
   const resultTeamId = teamIdFor(result);
   return resultTeamId && resultTeamId === teamIdFor(team);
@@ -80,6 +84,7 @@ function buildTeamSummary(team, results, tournamentIndex) {
     teamName,
     name: teamName,
     club: teamRecordClub(team),
+    division: teamRecordDivision(team),
     gender: GENDER_LABEL,
     totalPoints,
     tournamentsPlayed: teamResults.length,
@@ -160,10 +165,4 @@ export default async function handler(req, res) {
     res.status(500).json({ error: error.message });
   }
 }
-
-
-
-
-
-
 

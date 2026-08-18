@@ -2,6 +2,10 @@
   <h2>Women's Team Standings for 2026-2027 Season - Sample Data</h2>
 
   <div class="chrva-team-points__controls" aria-label="Standings controls">
+    <div class="chrva-team-points__division" aria-label="Division standings filters">
+      <button type="button" class="is-active" data-division-filter="A/AA">A/AA</button>
+      <button type="button" data-division-filter="B/BB">B/BB</button>
+    </div>
     <label class="chrva-team-points__season">
       <span>Season</span>
       <select data-season-filter>
@@ -30,6 +34,11 @@
       </thead>
       <tbody data-team-rows></tbody>
     </table>
+    <div class="chrva-team-points__pagination" data-pagination hidden>
+      <button type="button" data-page-prev>Previous</button>
+      <span data-page-status></span>
+      <button type="button" data-page-next>Next</button>
+    </div>
     <div class="chrva-team-points__count" data-count></div>
   </div>
 </div>
@@ -71,6 +80,32 @@
     gap: 10px;
     justify-content: flex-end;
     margin: 0 0 8px;
+  }
+
+  .chrva-team-points__division {
+    display: flex;
+    gap: 8px;
+  }
+
+  .chrva-team-points__controls button {
+    background: #fff;
+    border: 1px solid var(--chrva-red);
+    color: var(--chrva-red-dark);
+    cursor: pointer;
+    font: inherit;
+    font-size: 13px;
+    font-weight: 800;
+    min-height: 34px;
+    padding: 7px 14px;
+    text-transform: uppercase;
+  }
+
+  .chrva-team-points__controls button:hover,
+  .chrva-team-points__controls button:focus,
+  .chrva-team-points__controls button.is-active {
+    background: var(--chrva-red);
+    color: #fff;
+    outline: 0;
   }
 
   .chrva-team-points__season,
@@ -248,6 +283,48 @@
     text-align: right;
   }
 
+  .chrva-team-points__pagination {
+    align-items: center;
+    display: flex;
+    gap: 10px;
+    justify-content: flex-end;
+    margin-top: 8px;
+  }
+
+  .chrva-team-points__pagination button {
+    background: #fff;
+    border: 1px solid var(--chrva-red);
+    color: var(--chrva-red-dark);
+    cursor: pointer;
+    font: inherit;
+    font-size: 12px;
+    font-weight: 800;
+    min-height: 32px;
+    padding: 6px 12px;
+    text-transform: uppercase;
+  }
+
+  .chrva-team-points__pagination button:hover,
+  .chrva-team-points__pagination button:focus {
+    background: var(--chrva-red);
+    color: #fff;
+    outline: 0;
+  }
+
+  .chrva-team-points__pagination button:disabled {
+    background: #eeeeee;
+    border-color: #c7c7c7;
+    color: #777777;
+    cursor: default;
+  }
+
+  .chrva-team-points__pagination span {
+    color: var(--chrva-text);
+    font-size: 12px;
+    font-weight: 700;
+    min-width: 88px;
+    text-align: center;
+  }
   @media (max-width: 760px) {
     .chrva-team-points h2 {
       font-size: 24px;
@@ -270,13 +347,20 @@
     var tableWrap = root.querySelector("[data-table-wrap]");
     var rowsEl = root.querySelector("[data-team-rows]");
     var countEl = root.querySelector("[data-count]");
+    var paginationEl = root.querySelector("[data-pagination]");
+    var pageStatusEl = root.querySelector("[data-page-status]");
+    var prevButton = root.querySelector("[data-page-prev]");
+    var nextButton = root.querySelector("[data-page-next]");
     var searchInput = root.querySelector("[data-team-search]");
+    var filterButtons = Array.prototype.slice.call(root.querySelectorAll("[data-division-filter]"));
     var seasonSelect = root.querySelector("[data-season-filter]");
     var expanded = {};
     var allTeams = [];
     var selectedSeason = seasonSelect ? seasonSelect.value : "2026";
+    var selectedDivision = "A/AA";
     var searchTerm = "";
-    var maxVisibleTeams = 10;
+    var teamsPerPage = 10;
+    var currentPage = 1;
 
     function escapeHtml(value) {
       return String(value || "")
@@ -367,16 +451,27 @@
 
     function filteredTeams() {
       return allTeams.filter(function (team) {
+        var divisionMatches = String(team.division || "").trim().toUpperCase() === selectedDivision;
         var haystack = String((team.teamName || team.name || "") + " " + (team.club || "")).toLowerCase();
-        return !searchTerm || haystack.indexOf(searchTerm) !== -1;
+        var searchMatches = !searchTerm || haystack.indexOf(searchTerm) !== -1;
+        return divisionMatches && searchMatches;
       });
     }
 
     function render() {
       var matchingTeams = filteredTeams();
-      var teams = matchingTeams.slice(0, maxVisibleTeams);
+      var totalPages = Math.max(1, Math.ceil(matchingTeams.length / teamsPerPage));
+      currentPage = Math.min(currentPage, totalPages);
+      var startIndex = (currentPage - 1) * teamsPerPage;
+      var teams = matchingTeams.slice(startIndex, startIndex + teamsPerPage);
       rowsEl.innerHTML = teams.map(teamRow).join("");
-      countEl.textContent = selectedSeason + " " + label + ": showing " + teams.length + " of " + matchingTeams.length + " team" + (matchingTeams.length === 1 ? "" : "s");
+      var visibleStart = matchingTeams.length ? startIndex + 1 : 0;
+      var visibleEnd = startIndex + teams.length;
+      countEl.textContent = selectedSeason + " " + label + ": showing " + visibleStart + "-" + visibleEnd + " of " + matchingTeams.length + " team" + (matchingTeams.length === 1 ? "" : "s");
+      if (paginationEl) paginationEl.hidden = matchingTeams.length <= teamsPerPage;
+      if (pageStatusEl) pageStatusEl.textContent = "Page " + currentPage + " of " + totalPages;
+      if (prevButton) prevButton.disabled = currentPage <= 1;
+      if (nextButton) nextButton.disabled = currentPage >= totalPages;
       statusEl.hidden = true;
       tableWrap.hidden = false;
 
@@ -385,9 +480,25 @@
         statusEl.textContent = searchTerm ? "No teams match that search." : "No " + label.toLowerCase() + " team standings are available.";
       }
     }
-
     function toggleTeam(id) {
       expanded[id] = !expanded[id];
+      render();
+    }
+
+    function setPage(page) {
+      currentPage = page;
+      render();
+    }
+
+    function setDivision(division) {
+      selectedDivision = String(division || "A/AA").trim().toUpperCase();
+      expanded = {};
+      currentPage = 1;
+      filterButtons.forEach(function (button) {
+        var active = button.getAttribute("data-division-filter") === selectedDivision;
+        button.classList.toggle("is-active", active);
+        button.setAttribute("aria-pressed", active ? "true" : "false");
+      });
       render();
     }
 
@@ -401,6 +512,7 @@
       statusEl.textContent = "Loading team points...";
       tableWrap.hidden = true;
       expanded = {};
+      currentPage = 1;
 
       fetch(standingsUrl(), { credentials: "include" })
       .then(function (response) {
@@ -428,7 +540,26 @@
       searchInput.addEventListener("input", function () {
         searchTerm = String(searchInput.value || "").trim().toLowerCase();
         expanded = {};
+        currentPage = 1;
         render();
+      });
+    }
+
+    filterButtons.forEach(function (button) {
+      button.setAttribute("aria-pressed", button.classList.contains("is-active") ? "true" : "false");
+      button.addEventListener("click", function () {
+        setDivision(button.getAttribute("data-division-filter") || "A/AA");
+      });
+    });
+    if (prevButton) {
+      prevButton.addEventListener("click", function () {
+        if (currentPage > 1) setPage(currentPage - 1);
+      });
+    }
+
+    if (nextButton) {
+      nextButton.addEventListener("click", function () {
+        setPage(currentPage + 1);
       });
     }
 
@@ -446,6 +577,7 @@
     if (seasonSelect) {
       seasonSelect.addEventListener("change", function () {
         selectedSeason = seasonSelect.value;
+        currentPage = 1;
         loadStandings();
       });
     }
@@ -453,3 +585,4 @@
     loadStandings();
   })();
 </script>
+
