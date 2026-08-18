@@ -33,28 +33,22 @@ function normalizePayload(payload) {
   };
 }
 
-function teamNameFor(result) {
-  return String(result.Team_name || result.team_name || result.teamName || "").trim();
+function teamIdFor(row) {
+  return String(row.team_id || "").trim();
 }
 
-function teamIdFor(row) {
-  return String(row.team_id || row.teamId || "").trim();
+function teamRecordName(team) {
+  return String(team.name || "").trim();
+}
+
+function teamRecordClub(team) {
+  return String(team.club || "").trim();
 }
 
 function resultMatchesTeam(result, team) {
   const resultTeamId = teamIdFor(result);
-  if (resultTeamId && resultTeamId === teamIdFor(team)) return true;
-  return teamNameFor(result) === String(team.team_name || "").trim();
+  return resultTeamId && resultTeamId === teamIdFor(team);
 }
-
-function teamRecordForName(teamName) {
-  return {
-    team_id: "",
-    team_name: teamName,
-    club: ""
-  };
-}
-
 function buildTournamentResult(result, tournament) {
   const pointCalculation = calculatePoints(result, tournament);
 
@@ -73,7 +67,7 @@ function buildTournamentResult(result, tournament) {
 }
 
 function buildTeamSummary(team, results, tournamentIndex) {
-  const teamName = String(team.team_name || "").trim();
+  const teamName = teamRecordName(team);
   const teamResults = results
     .filter((result) => resultMatchesTeam(result, team))
     .map((result) => buildTournamentResult(result, tournamentIndex.get(tournamentKey(result))))
@@ -85,7 +79,7 @@ function buildTeamSummary(team, results, tournamentIndex) {
     teamId: teamIdFor(team),
     teamName,
     name: teamName,
-    club: String(team.club || "").trim(),
+    club: teamRecordClub(team),
     gender: GENDER_LABEL,
     totalPoints,
     tournamentsPlayed: teamResults.length,
@@ -95,15 +89,25 @@ function buildTeamSummary(team, results, tournamentIndex) {
 
 function buildTeamSummaries(payload, season) {
   const { teams, tournaments, results } = normalizePayload(payload);
-  const seasonResults = results.filter((result) => String(result.season || "").trim() === season && teamNameFor(result));
+  const seasonResults = results.filter((result) => String(result.season || "").trim() === season && teamIdFor(result));
   const tournamentIndex = indexTournaments(tournaments);
-  const teamRecords = teams.length ? teams : [...new Set(seasonResults.map(teamNameFor))].map(teamRecordForName);
-
-  return teamRecords
-    .filter((team) => String(team.team_name || "").trim())
+  const teamRecords = teams;
+  const summaries = teamRecords
+    .filter((team) => teamRecordName(team))
     .map((team) => buildTeamSummary(team, seasonResults, tournamentIndex))
     .filter((team) => team.tournamentsPlayed > 0)
     .sort((a, b) => b.totalPoints - a.totalPoints || a.name.localeCompare(b.name));
+
+  console.log("Team points rows:", {
+    season,
+    teams: teams.length,
+    tournaments: tournaments.length,
+    results: results.length,
+    seasonResults: seasonResults.length,
+    returnedTeams: summaries.length
+  });
+
+  return summaries;
 }
 
 export default async function handler(req, res) {
@@ -156,5 +160,10 @@ export default async function handler(req, res) {
     res.status(500).json({ error: error.message });
   }
 }
+
+
+
+
+
 
 
