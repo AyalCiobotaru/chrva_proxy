@@ -1,0 +1,455 @@
+<div class="chrva-team-points" data-team-points data-api-url="https://chrva-proxy.vercel.app/api/mens-teams" data-label="Men">
+  <h2>Men's Team Standings for 2026-2027 Season - Sample Data</h2>
+
+  <div class="chrva-team-points__controls" aria-label="Standings controls">
+    <label class="chrva-team-points__season">
+      <span>Season</span>
+      <select data-season-filter>
+        <option value="2026">2026</option>
+        <option value="2027">2027</option>
+      </select>
+    </label>
+    <label class="chrva-team-points__search">
+      <span>Search</span>
+      <input type="search" data-team-search placeholder="Team or club">
+    </label>
+  </div>
+
+  <div class="chrva-team-points__status" data-status>Loading team points...</div>
+
+  <div class="chrva-team-points__table-wrap" data-table-wrap hidden>
+    <table class="chrva-team-points__table">
+      <thead>
+        <tr>
+          <th>Team</th>
+          <th>Club</th>
+          <th>Points Earned</th>
+          <th>Top 2 Finishes</th>
+          <th>4s Tournaments Played</th>
+        </tr>
+      </thead>
+      <tbody data-team-rows></tbody>
+    </table>
+    <div class="chrva-team-points__count" data-count></div>
+  </div>
+</div>
+
+<style>
+  .chrva-team-points {
+    --chrva-red: #b51b2b;
+    --chrva-red-dark: #941523;
+    --chrva-row: #e9e9e9;
+    --chrva-row-alt: #f4f4f4;
+    --chrva-line: #ffffff;
+    --chrva-text: #48576a;
+    color: var(--chrva-text);
+    font-family: Arial, Helvetica, sans-serif;
+    margin: 0 auto;
+    width: 100%;
+  }
+
+  .chrva-team-points * {
+    box-sizing: border-box;
+  }
+
+  .chrva-team-points h2 {
+    color: var(--chrva-red-dark);
+    font-family: Georgia, "Times New Roman", serif;
+    font-size: 28px;
+    font-variant-numeric: lining-nums;
+    font-feature-settings: "lnum" 1;
+    font-weight: 900;
+    line-height: 1.1;
+    margin: 0 0 8px;
+    text-transform: uppercase;
+  }
+
+  .chrva-team-points__controls {
+    align-items: end;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    justify-content: flex-end;
+    margin: 0 0 8px;
+  }
+
+  .chrva-team-points__season,
+  .chrva-team-points__search {
+    align-items: center;
+    display: flex;
+    gap: 8px;
+    margin: 0;
+  }
+
+  .chrva-team-points__season span,
+  .chrva-team-points__search span {
+    color: var(--chrva-red-dark);
+    font-size: 12px;
+    font-weight: 800;
+    text-transform: uppercase;
+  }
+
+  .chrva-team-points__season select,
+  .chrva-team-points__search input {
+    border: 1px solid #c7c7c7;
+    color: var(--chrva-text);
+    font: inherit;
+    font-size: 13px;
+    min-height: 34px;
+    padding: 7px 10px;
+  }
+
+  .chrva-team-points__season select {
+    min-width: 96px;
+  }
+
+  .chrva-team-points__search input {
+    width: 220px;
+  }
+
+  .chrva-team-points__season select:focus,
+  .chrva-team-points__search input:focus {
+    border-color: var(--chrva-red);
+    outline: 1px solid var(--chrva-red);
+  }
+
+  .chrva-team-points__status {
+    background: var(--chrva-row);
+    color: var(--chrva-text);
+    font-size: 13px;
+    font-weight: 700;
+    padding: 12px 14px;
+  }
+
+  .chrva-team-points__table-wrap {
+    overflow-x: auto;
+  }
+
+  .chrva-team-points__table {
+    border-collapse: separate;
+    border-spacing: 0;
+    font-size: 12px;
+    min-width: 820px;
+    width: 100%;
+  }
+
+  .chrva-team-points__table th {
+    background: var(--chrva-red);
+    border-right: 2px solid var(--chrva-line);
+    color: #fff;
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: 13px;
+    font-variant-numeric: lining-nums;
+    font-feature-settings: "lnum" 1;
+    font-weight: 900;
+    letter-spacing: 0;
+    padding: 9px 14px;
+    text-align: left;
+    text-transform: uppercase;
+    white-space: nowrap;
+  }
+
+  .chrva-team-points__table th:nth-child(3),
+  .chrva-team-points__table th:nth-child(4),
+  .chrva-team-points__table th:nth-child(5) {
+    text-align: center;
+  }
+
+  .chrva-team-points__table td {
+    background: var(--chrva-row);
+    border-bottom: 2px solid var(--chrva-line);
+    border-right: 2px solid var(--chrva-line);
+    padding: 9px 14px;
+    vertical-align: top;
+  }
+
+  .chrva-team-points__team-row:nth-of-type(4n + 3) td {
+    background: var(--chrva-row-alt);
+  }
+
+  .chrva-team-points__team-row {
+    cursor: pointer;
+  }
+
+  .chrva-team-points__team-row:hover td,
+  .chrva-team-points__team-row:focus td {
+    background: #dddddd;
+    outline: 0;
+  }
+
+  .chrva-team-points__name {
+    font-weight: 700;
+  }
+
+  .chrva-team-points__points,
+  .chrva-team-points__played {
+    font-weight: 700;
+    text-align: center;
+    white-space: nowrap;
+  }
+
+  .chrva-team-points__top-results {
+    display: grid;
+    gap: 3px;
+  }
+
+  .chrva-team-points__top-result {
+    line-height: 1.35;
+  }
+
+  .chrva-team-points__toggle {
+    color: var(--chrva-red-dark);
+    display: block;
+    font-size: 11px;
+    font-weight: 800;
+    margin-top: 2px;
+    text-align: center;
+    text-transform: uppercase;
+  }
+
+  .chrva-team-points__details-row[hidden] {
+    display: none;
+  }
+
+  .chrva-team-points__details-cell {
+    background: #fff !important;
+    padding: 0 0 8px !important;
+  }
+
+  .chrva-team-points__details {
+    border: 1px solid #d7d7d7;
+  }
+
+  .chrva-team-points__details table {
+    border-collapse: collapse;
+    font-size: 12px;
+    width: 100%;
+  }
+
+  .chrva-team-points__details th {
+    background: #cfcfcf;
+    color: #333;
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: 11px;
+    padding: 8px 10px;
+  }
+
+  .chrva-team-points__details td {
+    background: #fff;
+    border: 1px solid #e5e5e5;
+    padding: 8px 10px;
+  }
+
+  .chrva-team-points__count {
+    color: var(--chrva-text);
+    font-size: 12px;
+    font-weight: 700;
+    margin-top: 6px;
+    text-align: right;
+  }
+
+  @media (max-width: 760px) {
+    .chrva-team-points h2 {
+      font-size: 24px;
+    }
+
+    .chrva-team-points__controls {
+      justify-content: flex-start;
+    }
+  }
+</style>
+
+<script>
+  (function () {
+    var root = document.querySelector("[data-team-points]");
+    if (!root) return;
+
+    var apiUrl = root.getAttribute("data-api-url") || "https://chrva-proxy.vercel.app/api/mens-teams";
+    var label = root.getAttribute("data-label") || "Men";
+    var statusEl = root.querySelector("[data-status]");
+    var tableWrap = root.querySelector("[data-table-wrap]");
+    var rowsEl = root.querySelector("[data-team-rows]");
+    var countEl = root.querySelector("[data-count]");
+    var searchInput = root.querySelector("[data-team-search]");
+    var seasonSelect = root.querySelector("[data-season-filter]");
+    var expanded = {};
+    var allTeams = [];
+    var selectedSeason = seasonSelect ? seasonSelect.value : "2026";
+    var searchTerm = "";
+    var maxVisibleTeams = 10;
+
+    function escapeHtml(value) {
+      return String(value || "")
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+    }
+
+    function formatDate(value) {
+      if (!value) return "TBD";
+      var date = new Date(value + "T00:00:00");
+      if (Number.isNaN(date.getTime())) return value;
+      return date.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
+    }
+
+    function normalizeTeams(payload) {
+      if (Array.isArray(payload)) return payload;
+      if (Array.isArray(payload.teams)) return payload.teams;
+      if (payload && payload.teamName) return [payload];
+      return [];
+    }
+
+    function topResults(team) {
+      return (team.results || [])
+        .slice()
+        .sort(function (a, b) {
+          return Number(b.points || 0) - Number(a.points || 0) || String(a.date || "").localeCompare(String(b.date || ""));
+        })
+        .slice(0, 2);
+    }
+
+    function resultLine(result) {
+      var bracket = result.bracket ? escapeHtml(result.bracket) + " " : "";
+      var finish = result.finish ? " - " + bracket + escapeHtml(result.finish) : "";
+      return "<div class=\"chrva-team-points__top-result\"><strong>" +
+        escapeHtml(result.name || "Tournament") + "</strong>: " +
+        escapeHtml(result.points || 0) + " pts" + finish + "</div>";
+    }
+
+    function teamKey(team) {
+      return team.teamId || team.teamName || team.name || "";
+    }
+
+    function teamRow(team) {
+      var key = teamKey(team);
+      var id = escapeHtml(key);
+      var isExpanded = !!expanded[key];
+      var top = topResults(team);
+      var topHtml = top.length ? top.map(resultLine).join("") : "No finishes listed";
+
+      return "<tr class=\"chrva-team-points__team-row\" tabindex=\"0\" role=\"button\" aria-expanded=\"" + isExpanded + "\" data-team-id=\"" + id + "\">" +
+        "<td><div class=\"chrva-team-points__name\">" + escapeHtml(team.teamName || team.name || "Unknown Team") + "</div></td>" +
+        "<td>" + escapeHtml(team.club || "-") + "</td>" +
+        "<td class=\"chrva-team-points__points\">" + escapeHtml(team.totalPoints || 0) + "</td>" +
+        "<td><div class=\"chrva-team-points__top-results\">" + topHtml + "</div></td>" +
+        "<td class=\"chrva-team-points__played\">" + escapeHtml(team.tournamentsPlayed || 0) +
+        "<span class=\"chrva-team-points__toggle\">" + (isExpanded ? "Hide Details" : "View Details") + "</span></td>" +
+        "</tr>" +
+        "<tr class=\"chrva-team-points__details-row\" " + (isExpanded ? "" : "hidden") + " data-details-for=\"" + id + "\">" +
+        "<td class=\"chrva-team-points__details-cell\" colspan=\"5\">" + detailsTable(team.results || []) + "</td>" +
+        "</tr>";
+    }
+
+    function pointsText(result) {
+      return String(result.points || 0) + (result.pointsFormula ? " (" + result.pointsFormula + ")" : "");
+    }
+
+    function detailsTable(results) {
+      if (!results.length) {
+        return "<div class=\"chrva-team-points__status\">No tournament results listed.</div>";
+      }
+
+      return "<div class=\"chrva-team-points__details\"><table>" +
+        "<thead><tr><th>Date</th><th>Tournament</th><th>Bracket</th><th>Points</th><th>Finish</th><th>Total Teams</th></tr></thead>" +
+        "<tbody>" + results.map(function (result) {
+          return "<tr>" +
+            "<td>" + escapeHtml(formatDate(result.date)) + "</td>" +
+            "<td>" + escapeHtml(result.name || "Tournament") + "</td>" +
+            "<td>" + escapeHtml(result.bracket || "-") + "</td>" +
+            "<td>" + escapeHtml(pointsText(result)) + "</td>" +
+            "<td>" + escapeHtml(result.finish || "-") + "</td>" +
+            "<td>" + escapeHtml(result.total_teams || "-") + "</td>" +
+            "</tr>";
+        }).join("") + "</tbody></table></div>";
+    }
+
+    function filteredTeams() {
+      return allTeams.filter(function (team) {
+        var haystack = String((team.teamName || team.name || "") + " " + (team.club || "")).toLowerCase();
+        return !searchTerm || haystack.indexOf(searchTerm) !== -1;
+      });
+    }
+
+    function render() {
+      var matchingTeams = filteredTeams();
+      var teams = matchingTeams.slice(0, maxVisibleTeams);
+      rowsEl.innerHTML = teams.map(teamRow).join("");
+      countEl.textContent = selectedSeason + " " + label + ": showing " + teams.length + " of " + matchingTeams.length + " team" + (matchingTeams.length === 1 ? "" : "s");
+      statusEl.hidden = true;
+      tableWrap.hidden = false;
+
+      if (!teams.length) {
+        statusEl.hidden = false;
+        statusEl.textContent = searchTerm ? "No teams match that search." : "No " + label.toLowerCase() + " team standings are available.";
+      }
+    }
+
+    function toggleTeam(id) {
+      expanded[id] = !expanded[id];
+      render();
+    }
+
+    function standingsUrl() {
+      var separator = apiUrl.indexOf("?") === -1 ? "?" : "&";
+      return apiUrl + separator + "season=" + encodeURIComponent(selectedSeason);
+    }
+
+    function loadStandings() {
+      statusEl.hidden = false;
+      statusEl.textContent = "Loading team points...";
+      tableWrap.hidden = true;
+      expanded = {};
+
+      fetch(standingsUrl(), { credentials: "include" })
+      .then(function (response) {
+        if (!response.ok) throw new Error("Unable to load team points.");
+        return response.json();
+      })
+      .then(function (payload) {
+        allTeams = normalizeTeams(payload).sort(function (a, b) {
+          return Number(b.totalPoints || 0) - Number(a.totalPoints || 0) || String(a.teamName || a.name || "").localeCompare(String(b.teamName || b.name || ""));
+        });
+
+        if (!allTeams.length) {
+          statusEl.textContent = "No team points are available.";
+          return;
+        }
+
+        render();
+      })
+      .catch(function (error) {
+        statusEl.textContent = error.message || "Unable to load team points.";
+      });
+    }
+
+    if (searchInput) {
+      searchInput.addEventListener("input", function () {
+        searchTerm = String(searchInput.value || "").trim().toLowerCase();
+        expanded = {};
+        render();
+      });
+    }
+
+    rowsEl.addEventListener("click", function (event) {
+      var row = event.target.closest ? event.target.closest("[data-team-id]") : null;
+      if (row) toggleTeam(row.getAttribute("data-team-id"));
+    });
+    rowsEl.addEventListener("keydown", function (event) {
+      if (event.key !== "Enter" && event.key !== " ") return;
+      var row = event.target.closest ? event.target.closest("[data-team-id]") : null;
+      if (!row) return;
+      event.preventDefault();
+      toggleTeam(row.getAttribute("data-team-id"));
+    });
+    if (seasonSelect) {
+      seasonSelect.addEventListener("change", function () {
+        selectedSeason = seasonSelect.value;
+        loadStandings();
+      });
+    }
+
+    loadStandings();
+  })();
+</script>

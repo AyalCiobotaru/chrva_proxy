@@ -127,6 +127,7 @@ export default async function handler(req, res) {
 
   try {
     const startedAt = Date.now();
+    console.log("Env Script URL: " + RESULTS_URL);
     const payload = await fetchSheetPayload();
     const fetchedAt = Date.now();
     const season = requestedSeason(req);
@@ -155,3 +156,5 @@ export default async function handler(req, res) {
     res.status(500).json({ error: error.message });
   }
 }
+
+
