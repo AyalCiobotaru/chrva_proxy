@@ -2,6 +2,7 @@ import {
   calculatePoints,
   createCachedSheetFetcher,
   firstQueryValue,
+  formatDisplayName,
   groupTeamsByTournament,
   indexPlayers,
   indexTournaments,
@@ -75,7 +76,7 @@ function buildTeam(team, playerIndex) {
       const player = playerIndex.get(usavMemberId);
       return {
         usavMemberId,
-        name: String(player?.display_name || "").trim()
+        name: formatDisplayName(player?.display_name)
       };
     })
   };
@@ -115,7 +116,7 @@ function buildPlayerSummary(player, results, tournamentIndex, teamsByTournament,
 
   return {
     usavMemberId,
-    name: String(player.display_name || "").trim(),
+    name: formatDisplayName(player.display_name),
     gender: String(player.gender || "").trim(),
     active: String(player.active || "").trim(),
     totalPoints,
