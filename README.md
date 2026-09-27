@@ -92,6 +92,25 @@ fetch("https://proxy.chrva.org/api/chrva")
 
 ---
 
+## Roster Generator
+
+The roster endpoints (/api/teams, /api/roster, and /api/rosters) read the
+native Google Sheet 163KRvuAwLEnsrAMUmMGL0uBrfiDXzBNBwvv7MgWLbTs using gspread.
+html/Roster_Generator.html calls these endpoints and needs no sheet URL.
+
+- Set GOOGLE_SERVICE_ACCOUNT_JSON to the service account credentials JSON.
+- Share the new spreadsheet with that service account's client_email as a viewer.
+- If SHEET_ID is set in Vercel, update it to the new spreadsheet ID above before
+  redeploying. This environment variable overrides the default in lib/roster_core.py.
+
+Expected tabs and column headers:
+
+| Tab | Columns |
+| --- | --- |
+| Teams | Team Name, Division, Season, Club, Team Contact |
+| Players | Full Name, Id, Jersey, Team |
+| Staff | Full Name, Id, Title, Team |
+
 ## Optional Enhancements
 - **Organization Restriction**: Uncomment the organization check in `chrva.js` to ensure only CHRVA org users can access.
 - **Caching Sheet Data**: Add a cache layer (e.g., in-memory for 5 minutes) to reduce Google Apps Script requests.

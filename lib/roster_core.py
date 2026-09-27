@@ -17,7 +17,7 @@ from pdfrw import PdfDict, PdfReader, PdfWriter
 SCOPES = ["https://www.googleapis.com/auth/spreadsheets.readonly"]
 
 # Prefer env var, fallback to your known sheet id
-SHEET_ID = os.getenv("SHEET_ID", "1AjUNsy-AT0MSL4FoH7S6dDS4nLx6GGOKlmUkXCLXEqw")
+SHEET_ID = os.getenv("SHEET_ID", "163KRvuAwLEnsrAMUmMGL0uBrfiDXzBNBwvv7MgWLbTs")
 
 PLAYERS_TAB = "Players"
 TEAMS_TAB = "Teams"
