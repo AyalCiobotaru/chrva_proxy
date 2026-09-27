@@ -30,9 +30,35 @@ function normalizePayload(payload) {
   };
 }
 
-function findTeamForResult(result, usavMemberId, teamsByTournament) {
+function teamIdFor(row) {
+  return String(row.team_id || "").trim();
+}
+
+function indexTeamsById(teams) {
+  return new Map(
+    teams
+      .map((team) => [teamIdFor(team), team])
+      .filter(([teamId]) => teamId)
+  );
+}
+
+function findTeamForResult(result, usavMemberId, teamsByTournament, teamIndex) {
+  const resultTeamId = teamIdFor(result);
+  if (resultTeamId) {
+    return teamIndex.get(resultTeamId) || null;
+  }
+
   const teams = teamsByTournament.get(tournamentKey(result)) || [];
   return teams.find((team) => teamPlayerIds(team).includes(usavMemberId)) || null;
+}
+
+function resultIncludesPlayer(result, usavMemberId, teamsByTournament, teamIndex) {
+  if (String(result.usav_member_id || "").trim() === usavMemberId) {
+    return true;
+  }
+
+  const team = findTeamForResult(result, usavMemberId, teamsByTournament, teamIndex);
+  return Boolean(team && teamPlayerIds(team).includes(usavMemberId));
 }
 
 function buildTeam(team, playerIndex) {
@@ -44,7 +70,7 @@ function buildTeam(team, playerIndex) {
   }
 
   return {
-    name: String(team.team_name || "").trim(),
+    name: String(team.team_name || team.name || "").trim(),
     players: teamPlayerIds(team).map((usavMemberId) => {
       const player = playerIndex.get(usavMemberId);
       return {
@@ -73,14 +99,14 @@ function buildTournamentResult(result, tournament, team, playerIndex) {
   };
 }
 
-function buildPlayerSummary(player, results, tournamentIndex, teamsByTournament, playerIndex) {
+function buildPlayerSummary(player, results, tournamentIndex, teamsByTournament, teamIndex, playerIndex) {
   const usavMemberId = String(player.usav_member_id || "").trim();
   const playerResults = results
-    .filter((result) => String(result.usav_member_id || "").trim() === usavMemberId)
+    .filter((result) => resultIncludesPlayer(result, usavMemberId, teamsByTournament, teamIndex))
     .map((result) => buildTournamentResult(
       result,
       tournamentIndex.get(tournamentKey(result)),
-      findTeamForResult(result, usavMemberId, teamsByTournament),
+      findTeamForResult(result, usavMemberId, teamsByTournament, teamIndex),
       playerIndex
     ))
     .sort((a, b) => String(a.date).localeCompare(String(b.date)) || String(a.name).localeCompare(String(b.name)));
@@ -109,11 +135,12 @@ function buildPlayerSummaries(payload, season) {
   const seasonResults = results.filter((result) => String(result.season || "").trim() === season);
   const tournamentIndex = indexTournaments(tournaments);
   const teamsByTournament = groupTeamsByTournament(teams);
+  const teamIndex = indexTeamsById(teams);
   const playerIndex = indexPlayers(players);
 
   return players
     .filter((player) => String(player.usav_member_id || "").trim())
-    .map((player) => buildPlayerSummary(player, seasonResults, tournamentIndex, teamsByTournament, playerIndex))
+    .map((player) => buildPlayerSummary(player, seasonResults, tournamentIndex, teamsByTournament, teamIndex, playerIndex))
     .filter((player) => player.tournamentsPlayed > 0)
     .sort((a, b) => b.totalPoints - a.totalPoints || a.name.localeCompare(b.name));
 }
