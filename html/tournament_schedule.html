@@ -34,6 +34,10 @@
     </label>
   </div>
 
+  <div>
+    <label>Fractions in the Teams column denotes how many registered out of max teams</label>
+  </div>
+
   <div class="chrva-schedule__bulk-actions" aria-label="Month group controls">
     <button type="button" data-expand-all>Expand all</button>
     <button type="button" data-collapse-all>Collapse all</button>
@@ -486,7 +490,7 @@
     if (!root) return;
 
     var csv = 'Date,DIV,# Registered,# TEAMS,COST ($),HOST,NAME ,Register By,LOCATION,Reg. Links,Free Agents\n' +
-      '"Sat, Sep 26",RevCo 4s,"",10,160,CHRVA,Fall Brawl Fours,"Wed, Sep 23",North Laurel Community Center,"<a href=""https://www.advancedeventsystems.com/events/48458"" target=""_blank"">AES</a><br>or<br><a href=""https://form.jotform.com/252665654454162"" target=_blank>Jotform</a>","<a href=""https://www.chrva.org/free-agents?event=fall_brawl_fours"" target=""_blank"">Free Agents</a>"\n' +
+      '"Sat, Sep 26",RevCo 4s,"",8/10,160,CHRVA,Fall Brawl Fours,"Wed, Sep 23",North Laurel Community Center,"<a href=""https://www.advancedeventsystems.com/events/48458"" target=""_blank"">AES</a><br>or<br><a href=""https://form.jotform.com/252665654454162"" target=_blank>Jotform</a>","<a href=""https://www.chrva.org/free-agents?event=fall_brawl_fours"" target=""_blank"">Free Agents</a>"\n' +
       '"Sat, Oct 17",RevCo 4s,"",10,160,CHRVA,Blocktoberfest,"Wed, Oct 14",Gary J Arthur Community Center,"<a href=""https://www.advancedeventsystems.com/events/48459"" target=""_blank"">AES</a><br>or<br><a href=""https://form.jotform.com/252665654454162"" target=_blank>Jotform</a>","<a href=""https://www.chrva.org/free-agents?event=Blocktoberfest"" target=_blank"">Free Agents</a>"\n' +
       '"Sat, Oct 31",RevCo 4s,"",15,160,CHRVA,Frightful Fours,"Wed, Oct 28",Athletic Performance Inc,"<a href=""https://www.advancedeventsystems.com/events/48460"" target=""_blank"">AES</a><br>or<br><a href=""https://form.jotform.com/252665654454162"" target=_blank>Jotform</a>","<a href=""https://www.chrva.org/free-agents?event=Frightful Fours"" target=_blank"">Free Agents</a>"\n' +
       '"Sat, Nov 14",RevCo 4s,"",10,160,CHRVA,The Harvest Showdown**,"Wed, Nov 11",Albert Einstein High School,"<a href=""https://www.advancedeventsystems.com/events/48461"" target=""_blank"">AES</a><br>or<br><a href=""https://form.jotform.com/252665654454162"" target=_blank>Jotform</a>","<a href=""https://www.chrva.org/free-agents?event=The Harvest Showdown"" target=_blank"">Free Agents</a>"\n' +
@@ -521,7 +525,7 @@
       '"Sat, Apr 24",Mens A/AA,"",5,280,CHRVA,Post Season Fun,"Wed, Apr 21",FVBC,"<a href=""https://www.advancedeventsystems.com/events/"" target=""_blank"">AES (coming soon)</a><br>or<br><a href=""https://form.jotform.com/252665654454162"" target=_blank>Jotform</a>","<a href=""https://www.chrva.org/free-agents?event=Post Season Fun"" target=_blank"">Free Agents</a>"\n' +
       '"Sat, Apr 24",Mens B/BB,"",10,280,CHRVA,Post Season Fun,"Wed, Apr 21",FVBC,"<a href=""https://www.advancedeventsystems.com/events/"" target=""_blank"">AES (coming soon)</a><br>or<br><a href=""https://form.jotform.com/252665654454162"" target=_blank>Jotform</a>","<a href=""https://www.chrva.org/free-agents?event=Post Season Fun"" target=_blank"">Free Agents</a>"\n' +
       '"Sat, May 1",Mens Day 1,"",20,450,CHRVA,Nationals Warm-Up Day 1,"Wed, Apr 28",The St. James,"<a href=""https://www.advancedeventsystems.com/events/"" target=""_blank"">AES (coming soon)</a><br>or<br><a href=""https://form.jotform.com/252665654454162"" target=_blank>Jotform</a>","<a href=""https://www.chrva.org/free-agents?event=Nationals Warm-Up Day 1"" target=_blank"">Free Agents</a>"\n' +
-      '"Sun, May 2",Mens Day 2,"",--,--,CHRVA,Nationals Warm-Up Day 2,"Thurs, Apr 29",The St. James,"<a href=""https://www.advancedeventsystems.com/events/"" target=""_blank"">AES (coming soon)</a><br>or<br><a href=""https://form.jotform.com/252665654454162"" target=_blank>Jotform</a>","<a href=""https://www.chrva.org/free-agents?event=Nationals Warm-Up Day 2"" target=_blank"">Free Agents</a>"\n' +
+      '"Sun, May 2",Mens Day 2,"",--,--,CHRVA,Nationals Warm-Up Day 2,--,The St. James,"<a href=""https://www.advancedeventsystems.com/events/"" target=""_blank"">AES (coming soon)</a><br>or<br><a href=""https://form.jotform.com/252665654454162"" target=_blank>Jotform</a>","<a href=""https://www.chrva.org/free-agents?event=Nationals Warm-Up Day 2"" target=_blank"">Free Agents</a>"\n' +
       '"Sat, May 8",RevCo 4s,"",15,160,CHRVA,Flowery Fours**,"Wed, May 5",Blair Montgomery High School,"<a href=""https://www.advancedeventsystems.com/events/"" target=""_blank"">AES (coming soon)</a><br>or<br><a href=""https://form.jotform.com/252665654454162"" target=_blank>Jotform</a>","<a href=""https://www.chrva.org/free-agents?event=Flowery Fours"" target=_blank"">Free Agents</a>"\n' +
       '"Sat, May 15",First Come First Serve,"",15,280,CHRVA,Nationals Prep,"Wed, May 12",MD County School,"<a href=""https://www.advancedeventsystems.com/events/"" target=""_blank"">AES (coming soon)</a><br>or<br><a href=""https://form.jotform.com/252665654454162"" target=_blank>Jotform</a>","<a href=""https://www.chrva.org/free-agents?event=Nationals Prep"" target=_blank"">Free Agents</a>"\n' +
       '"Friday, May 28 - June 3rd",ALL (Big),"",ALL,900,USAV,USAV Nationals,TBD,Chicago,"<a href=""https://www.advancedeventsystems.com/events/"" target=""_blank"">AES (coming soon)</a><br>or<br><a href=""https://form.jotform.com/252665654454162"" target=_blank>Jotform</a>",Not Allowed';
