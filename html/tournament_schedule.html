@@ -586,6 +586,21 @@
       return new Date(year, monthIndex[match[1].slice(0, 3).toLowerCase()], Number(match[2])).getTime();
     }
 
+    function eventEndDateValue(dateText, year) {
+      var datePattern = /\b(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*\s+(\d{1,2})/gi;
+      var match;
+      var firstMonth = null;
+      var endDate = eventDateValue(dateText, year);
+
+      while ((match = datePattern.exec(dateText)) !== null) {
+        var month = monthIndex[match[1].slice(0, 3).toLowerCase()];
+        if (firstMonth === null) firstMonth = month;
+        endDate = new Date(year + (month < firstMonth ? 1 : 0), month, Number(match[2])).getTime();
+      }
+
+      return endDate;
+    }
+
     function eventMonth(dateText, dateValue) {
       var match = dateText.match(/\b(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*/i);
       var index = match ? monthIndex[match[1].slice(0, 3).toLowerCase()] : new Date(dateValue).getMonth();
@@ -674,6 +689,7 @@
           links: normalizeLinks(row[9], row[10]),
           year: year,
           dateValue: dateValue,
+          endDateValue: eventEndDateValue(row[0], year),
           monthKey: month.key,
           monthLabel: month.label,
           categories: categoriesFor(row[1])
@@ -684,6 +700,21 @@
     }
 
     var schedule = buildData();
+
+    function collapseFinishedMonths() {
+      var today = new Date();
+      var startOfToday = new Date(today.getFullYear(), today.getMonth(), today.getDate()).getTime();
+      var latestDateByMonth = {};
+
+      schedule.forEach(function (item) {
+        var id = item.year + "-" + item.monthKey;
+        latestDateByMonth[id] = Math.max(latestDateByMonth[id] || 0, item.endDateValue);
+      });
+
+      Object.keys(latestDateByMonth).forEach(function (id) {
+        if (latestDateByMonth[id] < startOfToday) collapsedMonths[id] = true;
+      });
+    }
 
     function populateMonths() {
       var seen = {};
@@ -787,6 +818,7 @@
         "</div><div class=\"chrva-schedule__card-field chrva-schedule__card-field--links\"><span>To Register</span><div class=\"chrva-schedule__links\">" + item.links + "</div></div></article>";
     }
 
+    collapseFinishedMonths();
     populateMonths();
     render();
     root.addEventListener("click", function (event) {
