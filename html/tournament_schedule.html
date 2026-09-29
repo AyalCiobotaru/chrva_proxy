@@ -264,6 +264,19 @@
     font-weight: 800;
   }
 
+  .chrva-schedule__special {
+    background: #fff4d6;
+    border: 1px solid #e6a700;
+    border-radius: 6px;
+    color: #6b3b00;
+    display: block;
+    font-size: 13px;
+    font-weight: 800;
+    line-height: 1.35;
+    margin-top: 7px;
+    padding: 7px 9px;
+  }
+
   .chrva-schedule__meta {
     color: var(--chrva-muted);
     font-size: 13px;
@@ -302,7 +315,7 @@
 
   .chrva-schedule__links {
     display: flex;
-    flex-wrap: wrap;
+    flex-wrap: nowrap;
     gap: 7px;
     min-width: 170px;
   }
@@ -366,6 +379,10 @@
   }
 
   @media (max-width: 760px) {
+    .chrva-schedule__links {
+      flex-wrap: wrap;
+    }
+
     .chrva-schedule__header {
       align-items: start;
       display: grid;
@@ -489,10 +506,10 @@
     var root = document.querySelector("[data-chrva-adult-schedule]");
     if (!root) return;
 
-    var csv = 'Date,DIV,# Registered,# TEAMS,COST ($),HOST,NAME ,Register By,LOCATION,Reg. Links,Free Agents\n' +
+    var csv = 'Date,DIV,# Registered,# TEAMS,COST ($),HOST,NAME ,Register By,LOCATION,Reg. Links,Free Agents,Special Announcement\n' +
       '"Sat, Sep 26",RevCo 4s,"",8/10,160,CHRVA,Fall Brawl Fours,"Wed, Sep 23",North Laurel Community Center,"<a href=""https://www.advancedeventsystems.com/events/48458"" target=""_blank"">AES</a><br>or<br><a href=""https://form.jotform.com/252665654454162"" target=_blank>Jotform</a>","<a href=""https://www.chrva.org/free-agents?event=fall_brawl_fours"" target=""_blank"">Free Agents</a>"\n' +
       '"Sat, Oct 17",RevCo 4s,"",10,160,CHRVA,Blocktoberfest,"Wed, Oct 14",Gary J Arthur Community Center,"<a href=""https://www.advancedeventsystems.com/events/48459"" target=""_blank"">AES</a><br>or<br><a href=""https://form.jotform.com/252665654454162"" target=_blank>Jotform</a>","<a href=""https://www.chrva.org/free-agents?event=Blocktoberfest"" target=_blank"">Free Agents</a>"\n' +
-      '"Sat, Oct 31",RevCo 4s,"",15,160,CHRVA,Frightful Fours,"Wed, Oct 28",Athletic Performance Inc,"<a href=""https://www.advancedeventsystems.com/events/48460"" target=""_blank"">AES</a><br>or<br><a href=""https://form.jotform.com/252665654454162"" target=_blank>Jotform</a>","<a href=""https://www.chrva.org/free-agents?event=Frightful Fours"" target=_blank"">Free Agents</a>"\n' +
+      '"Sat, Oct 31",RevCo 4s,"",15,160,CHRVA,Frightful Fours,"Wed, Oct 28",Athletic Performance Inc,"<a href=""https://www.advancedeventsystems.com/events/48460"" target=""_blank"">AES</a><br>or<br><a href=""https://form.jotform.com/252665654454162"" target=_blank>Jotform</a>","<a href=""https://www.chrva.org/free-agents?event=Frightful Fours"" target=_blank"">Free Agents</a>","Costume Party - Wear a costume for a chance to win prizes!"\n' +
       '"Sat, Nov 14",RevCo 4s,"",10,160,CHRVA,The Harvest Showdown**,"Wed, Nov 11",Albert Einstein High School,"<a href=""https://www.advancedeventsystems.com/events/48461"" target=""_blank"">AES</a><br>or<br><a href=""https://form.jotform.com/252665654454162"" target=_blank>Jotform</a>","<a href=""https://www.chrva.org/free-agents?event=The Harvest Showdown"" target=_blank"">Free Agents</a>"\n' +
       '"Sun, Nov 22",Mens 6s & Womens 6s,"",40,280,OC Volleyball,OC x CHRVA,"Wed, Nov 19",UMD Armory & Richie Coliseum,"<a href=""https://forms.gle/Hws4ScyMvoUQPNA59"" target=""_blank"">Register</a>","<a href=""https://www.chrva.org/free-agents?event=OC x CHRVA"" target=_blank"">Free Agents</a>"\n' +
       '"Sat, Nov 28",Mens 6s A/AA,"",5,200,CHRVA,Volley Banquet Bash,"Wed, Nov 25",North Laurel Community Center,"<a href=""https://www.advancedeventsystems.com/events/48464"" target=""_blank"">AES</a><br>or<br><a href=""https://form.jotform.com/252665654454162"" target=_blank>Jotform</a>","<a href=""https://www.chrva.org/free-agents?event=Volley Banquet Bash"" target=_blank"">Free Agents</a>"\n' +
@@ -687,6 +704,7 @@
           registerBy: row[7],
           location: row[8],
           links: normalizeLinks(row[9], row[10]),
+          specialAnnouncement: row[11] || "",
           year: year,
           dateValue: dateValue,
           endDateValue: eventEndDateValue(row[0], year),
@@ -796,7 +814,7 @@
     function tableRow(item) {
       return "<tr class=\"chrva-schedule__event-row\">" +
         "<td><div class=\"chrva-schedule__date\">" + escapeHtml(item.date) + "</div><div class=\"chrva-schedule__meta\">" + item.year + "</div></td>" +
-        "<td><div class=\"chrva-schedule__event\">" + escapeHtml(item.name) + "</div><div class=\"chrva-schedule__meta\">" + escapeHtml(item.host) + "</div></td>" +
+        "<td><div class=\"chrva-schedule__event\">" + escapeHtml(item.name) + "</div><div class=\"chrva-schedule__meta\">" + escapeHtml(item.host) + "</div>" + specialAnnouncement(item) + "</td>" +
         "<td><span class=\"" + badgeClass(item) + "\">" + escapeHtml(item.division) + "</span></td>" +
         "<td>" + escapeHtml(item.teams || "TBD") + "</td>" +
         "<td>" + escapeHtml(money(item.cost)) + "</td>" +
@@ -808,7 +826,7 @@
 
     function card(item) {
       return "<article class=\"chrva-schedule__card\">" +
-        "<div class=\"chrva-schedule__card-top\"><div><div class=\"chrva-schedule__date\">" + escapeHtml(item.date) + " " + item.year + "</div><h3>" + escapeHtml(item.name) + "</h3></div><span class=\"" + badgeClass(item) + "\">" + escapeHtml(item.division) + "</span></div>" +
+        "<div class=\"chrva-schedule__card-top\"><div><div class=\"chrva-schedule__date\">" + escapeHtml(item.date) + " " + item.year + "</div><h3>" + escapeHtml(item.name) + "</h3>" + specialAnnouncement(item) + "</div><span class=\"" + badgeClass(item) + "\">" + escapeHtml(item.division) + "</span></div>" +
         "<div class=\"chrva-schedule__card-field\"><span>Location</span>" + escapeHtml(item.location) + "</div>" +
         "<div class=\"chrva-schedule__card-grid\">" +
         "<div class=\"chrva-schedule__card-field\"><span>Teams</span>" + escapeHtml(item.teams || "TBD") + "</div>" +
@@ -816,6 +834,11 @@
         "<div class=\"chrva-schedule__card-field\"><span>Register By</span>" + escapeHtml(item.registerBy || "TBD") + "</div>" +
         "<div class=\"chrva-schedule__card-field\"><span>Host</span>" + escapeHtml(item.host) + "</div>" +
         "</div><div class=\"chrva-schedule__card-field chrva-schedule__card-field--links\"><span>To Register</span><div class=\"chrva-schedule__links\">" + item.links + "</div></div></article>";
+    }
+
+    function specialAnnouncement(item) {
+      if (!item.specialAnnouncement) return "";
+      return "<div class=\"chrva-schedule__special\"><span aria-hidden=\"true\">&#127875;</span> " + escapeHtml(item.specialAnnouncement) + "</div>";
     }
 
     collapseFinishedMonths();
