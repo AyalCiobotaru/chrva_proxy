@@ -127,6 +127,15 @@ class CurrentRegistrationsCoreTests(unittest.TestCase):
 
         self.assertEqual([item["id"] for item in payload["tournaments"]], ["boolean-true"])
 
+    def test_ignores_blank_rows_with_unchecked_checkbox_values(self):
+        payload = self.build(
+            [["", "", "", "", False]],
+            [["", "", "", "", "", False, ""]],
+        )
+
+        self.assertEqual(payload, {"tournaments": []})
+        self.assertEqual(self.warnings, [])
+
 
 if __name__ == "__main__":
     unittest.main()

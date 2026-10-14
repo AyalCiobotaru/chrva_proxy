@@ -73,7 +73,8 @@ def _records(
     for row_number, row in enumerate(rows, start=2):
         padded = list(row) + [""] * max(0, len(headers) - len(row))
         record = dict(zip(headers, padded[: len(headers)]))
-        if any(value not in (None, "") for value in record.values()):
+        # Blank checkbox cells may be returned as boolean False by Sheets.
+        if any(value not in (None, "", False) for value in record.values()):
             yield row_number, record
 
 
