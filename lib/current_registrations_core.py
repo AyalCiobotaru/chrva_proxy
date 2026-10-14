@@ -14,12 +14,13 @@ TOURNAMENT_HEADERS = (
     "tournament_id",
     "tournament_name",
     "tournament_date",
-    "division",
+    "format",
     "published",
 )
 REGISTRATION_HEADERS = (
     "team_name",
     "tournament_id",
+    "division",
     "roster",
     "status",
     "published",
@@ -29,6 +30,8 @@ REGISTRATION_HEADERS = (
 TOURNAMENT_ID_PATTERN = re.compile(r"^[a-z0-9]+(?:-[a-z0-9]+)*$")
 PUBLIC_STATUSES = {"registered", "waitlisted"}
 ALL_STATUSES = PUBLIC_STATUSES | {"withdrawn"}
+TOURNAMENT_FORMATS = {"Mens", "Womens", "RevCo 4s"}
+REGISTRATION_DIVISIONS = {"A/AA", "B/BB"}
 GOOGLE_SHEETS_EPOCH = date(1899, 12, 30)
 
 LogWarning = Callable[[str], None]
@@ -132,7 +135,7 @@ def build_public_payload(
     for row_number, row in tournament_rows:
         tournament_id = _clean(row.get("tournament_id"))
         tournament_name = _clean(row.get("tournament_name"))
-        division = _clean(row.get("division"))
+        tournament_format = _clean(row.get("format"))
 
         if tournament_id in duplicate_tournament_ids:
             warn(f"{TOURNAMENTS_TAB} row {row_number}: duplicate tournament_id omitted")
@@ -140,7 +143,7 @@ def build_public_payload(
         if not TOURNAMENT_ID_PATTERN.fullmatch(tournament_id):
             warn(f"{TOURNAMENTS_TAB} row {row_number}: invalid tournament_id omitted")
             continue
-        if not tournament_name or not division:
+        if not tournament_name or tournament_format not in TOURNAMENT_FORMATS:
             warn(f"{TOURNAMENTS_TAB} row {row_number}: missing public display value omitted")
             continue
         if not _published(row.get("published")):
@@ -159,7 +162,9 @@ def build_public_payload(
             "id": tournament_id,
             "name": tournament_name,
             "date": tournament_date.isoformat(),
-            "division": division,
+            "format": tournament_format,
+            # Temporary response alias for the currently embedded page during rollout.
+            "division": tournament_format,
             "registrations": [],
         }
 
@@ -180,8 +185,9 @@ def build_public_payload(
         team_name = " ".join(_clean(row.get("team_name")).split())
         team_key = _normalize_team_name(team_name)
         status = _clean(row.get("status")).casefold()
+        division = _clean(row.get("division"))
 
-        if not tournament_id or not team_name:
+        if not tournament_id or not team_name or division not in REGISTRATION_DIVISIONS:
             warn(f"{REGISTRATIONS_TAB} row {row_number}: missing required value omitted")
             continue
         if registration_keys[(tournament_id, team_key)] > 1:
@@ -201,6 +207,7 @@ def build_public_payload(
         valid_tournaments[tournament_id]["registrations"].append(
             {
                 "teamName": team_name,
+                "division": division,
                 "status": status,
                 "roster": _parse_roster(row.get("roster")),
             }

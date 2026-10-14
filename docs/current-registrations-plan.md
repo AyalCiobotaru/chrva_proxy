@@ -31,7 +31,7 @@ Column headers and tab names are exact and case-sensitive in the implementation.
 | `tournament_id` | Yes | Permanent public identifier containing lowercase letters, digits, and hyphens only |
 | `tournament_name` | Yes | Public display name |
 | `tournament_date` | Yes | Real Google Sheets date cell; emitted as `YYYY-MM-DD` |
-| `division` | Yes | Exact public label, such as `Women's A/AA` |
+| `format` | Yes | Dropdown restricted to `Mens`, `Womens`, or `RevCo 4s` |
 | `published` | Yes | Google Sheets checkbox; only boolean `TRUE` publishes the tournament |
 
 Tournament IDs must be unique. Changing a published ID breaks links that use the old ID.
@@ -42,6 +42,7 @@ Tournament IDs must be unique. Changing a published ID breaks links that use the
 | --- | --- | --- |
 | `team_name` | Yes | Public team name |
 | `tournament_id` | Yes | Exact reference to an existing tournament ID |
+| `division` | Yes | Dropdown restricted to `A/AA` or `B/BB` |
 | `roster` | No | Public player names separated by line breaks |
 | `status` | Yes | Dropdown restricted to `registered`, `waitlisted`, or `withdrawn` |
 | `published` | Yes | Google Sheets checkbox; only boolean `TRUE` publishes the registration |
@@ -111,13 +112,14 @@ The response contains no generated or freshness timestamp.
 {
   "tournaments": [
     {
-      "id": "2027-volley-banquet-bash-womens",
-      "name": "Women's 6s Volley Banquet Bash",
+      "id": "2027-11-28-volley-banquet-bash-womens",
+      "name": "Volley Banquet Bash",
       "date": "2027-11-28",
-      "division": "Women's A/AA",
+      "format": "Womens",
       "registrations": [
         {
           "teamName": "Example Team",
+          "division": "A/AA",
           "status": "registered",
           "roster": [
             "Alex Example",
@@ -142,7 +144,7 @@ Use plain HTML, CSS, and JavaScript without jQuery, DataTables, or another exter
 - Sort tournaments chronologically by date.
 - Start with every tournament collapsed.
 - Allow several tournaments to remain expanded at once.
-- Show each chip's tournament name, formatted date, division, and counts.
+- Show each chip's tournament name, formatted date, format, and counts.
 - Use count text such as `8 teams · 2 waitlisted`.
 - Omit the waitlist phrase when its count is zero.
 - Use `1 team` and `1 waitlisted` for singular counts.
@@ -154,7 +156,7 @@ Use plain HTML, CSS, and JavaScript without jQuery, DataTables, or another exter
 
 - Read the exact tournament ID from the `event` query parameter.
 - Match it exactly against the returned public tournaments.
-- Show the matching tournament heading, date, division, counts, and registrations.
+- Show the matching tournament heading, date, format, counts, and registrations.
 - Do not show the tournament picker.
 - Provide a clear-filter link built from the current URL by removing only `event`; preserve the current path and other query parameters.
 - For an unknown, unpublished, or expired ID, show `This tournament is not available` and a link back to the unfiltered view.
@@ -165,7 +167,7 @@ Use plain HTML, CSS, and JavaScript without jQuery, DataTables, or another exter
 - Sort teams alphabetically using a case-insensitive comparison.
 - Render teams as compact cards in a responsive grid.
 - Show the team name as the card heading.
-- Show a visible badge only for waitlisted teams.
+- Show each team's division and a visible badge for waitlisted teams.
 - Render roster names as a simple list in their manually entered order.
 - Omit the roster area when the roster is empty.
 - Allow the page to grow naturally without search or pagination in the first version.
@@ -215,7 +217,7 @@ Date formatting uses `en-US` and preserves the `America/New_York` calendar date 
 - Empty roster, empty tournament, empty dataset, and endpoint failure
 - Mobile and desktop card layouts
 - Keyboard operation, visible focus, and expanded-state accessibility
-- Escaping of tournament, division, team, and player text
+- Escaping of tournament, format, division, team, and player text
 - Date display around UTC offsets and daylight-saving boundaries
 
 ## Implementation sequence
@@ -255,6 +257,8 @@ These do not block the completed local implementation:
 | 2026-10-14 | Show registered and waitlisted teams | Waitlisted teams remain visible but do not count as registered teams |
 | 2026-10-14 | Use dependency-free tournament chips and team cards | Fits nested roster data without a table library |
 | 2026-10-14 | Defer proper multi-day date support | First version stores and expires by the first tournament date |
+| 2026-10-14 | Store tournament format separately from registration division | One Mens, Womens, or RevCo 4s tournament can contain both A/AA and B/BB registrations |
+| 2026-10-14 | Split combined and All schedule entries into Mens and Womens records | Keeps every tournament format within the three-value schema |
 
 ## Out of scope
 

@@ -1,4 +1,7 @@
 <section class="chrva-registrations" data-current-registrations>
+  <div class="chrva-registrations__actions">
+    <button class="chrva-registrations__refresh" type="button" data-refresh>Refresh data</button>
+  </div>
   <div class="chrva-registrations__status" data-status role="status" aria-live="polite">
     <span class="chrva-registrations__spinner" aria-hidden="true"></span>
     <span>Loading current registrations…</span>
@@ -24,6 +27,38 @@
   .chrva-registrations *::before,
   .chrva-registrations *::after {
     box-sizing: border-box;
+  }
+
+  .chrva-registrations [hidden] {
+    display: none !important;
+  }
+
+  .chrva-registrations__actions {
+    display: flex;
+    justify-content: flex-end;
+    margin-bottom: 0.75rem;
+  }
+
+  .chrva-registrations__refresh {
+    background: var(--chrva-blue);
+    border: 1px solid var(--chrva-blue);
+    border-radius: 0.4rem;
+    color: #fff;
+    cursor: pointer;
+    font: inherit;
+    font-weight: 700;
+    padding: 0.65rem 1rem;
+  }
+
+  .chrva-registrations__refresh:hover,
+  .chrva-registrations__refresh:focus-visible {
+    background: #003f80;
+    border-color: #003f80;
+  }
+
+  .chrva-registrations__refresh:disabled {
+    cursor: wait;
+    opacity: 0.65;
   }
 
   .chrva-registrations__status {
@@ -244,6 +279,12 @@
       animation: none;
     }
   }
+
+  @media (max-width: 600px) {
+    .chrva-registrations__refresh {
+      width: 100%;
+    }
+  }
 </style>
 
 <script>
@@ -256,6 +297,7 @@
 
     var statusEl = root.querySelector("[data-status]");
     var contentEl = root.querySelector("[data-content]");
+    var refreshButton = root.querySelector("[data-refresh]");
 
     function element(tagName, className, text) {
       var node = document.createElement(tagName);
@@ -321,6 +363,7 @@
         var card = element("article", "chrva-registrations__card");
         var heading = element("h3", "chrva-registrations__card-heading");
         heading.appendChild(element("span", "chrva-registrations__team-name", registration.teamName || "Unnamed team"));
+        heading.appendChild(element("span", "chrva-registrations__badge", registration.division));
 
         if (registration.status === "waitlisted") {
           heading.appendChild(element("span", "chrva-registrations__badge", "Waitlisted"));
@@ -342,7 +385,7 @@
     }
 
     function tournamentMeta(tournament) {
-      return formatDate(tournament.date) + " · " + tournament.division;
+      return formatDate(tournament.date) + " · " + tournament.format;
     }
 
     function renderTournamentDetails(tournament) {
@@ -397,12 +440,33 @@
       contentEl.hidden = true;
     }
 
-    fetch(API_URL, { credentials: "omit" })
-      .then(function (response) {
-        if (!response.ok) throw new Error("Request failed with status " + response.status);
-        return response.json();
-      })
-      .then(function (payload) {
+    function showLoading(isRefresh) {
+      contentEl.replaceChildren();
+      contentEl.hidden = true;
+      statusEl.classList.remove("is-error");
+      statusEl.replaceChildren(
+        element("span", "chrva-registrations__spinner"),
+        element("span", "", isRefresh ? "Refreshing current registrations…" : "Loading current registrations…")
+      );
+      statusEl.firstChild.setAttribute("aria-hidden", "true");
+      statusEl.hidden = false;
+      refreshButton.disabled = true;
+      refreshButton.textContent = isRefresh ? "Refreshing…" : "Loading…";
+    }
+
+    function loadData(isRefresh) {
+      showLoading(isRefresh);
+      var requestUrl = API_URL;
+      if (isRefresh) {
+        requestUrl += (requestUrl.indexOf("?") === -1 ? "?" : "&") + "refresh=" + Date.now();
+      }
+
+      fetch(requestUrl, { credentials: "omit", cache: isRefresh ? "no-store" : "default" })
+        .then(function (response) {
+          if (!response.ok) throw new Error("Request failed with status " + response.status);
+          return response.json();
+        })
+        .then(function (payload) {
         if (!payload || !Array.isArray(payload.tournaments)) {
           throw new Error("Invalid response format");
         }
@@ -433,10 +497,18 @@
         });
         contentEl.appendChild(list);
         showContent();
-      })
-      .catch(function (error) {
-        console.error("Unable to load current registrations:", error);
-        showFailure("Current registrations could not be loaded. Please try again later.");
-      });
+        })
+        .catch(function (error) {
+          console.error("Unable to load current registrations:", error);
+          showFailure("Current registrations could not be loaded. Please try again later.");
+        })
+        .finally(function () {
+          refreshButton.disabled = false;
+          refreshButton.textContent = "Refresh data";
+        });
+    }
+
+    refreshButton.addEventListener("click", function () { loadData(true); });
+    loadData(false);
   })();
 </script>

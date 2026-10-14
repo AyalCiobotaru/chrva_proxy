@@ -55,6 +55,7 @@
           <th>Location</th>
           <th>Register By</th>
           <th>To Register</th>
+          <th>Registrations</th>
         </tr>
       </thead>
       <tbody data-schedule-rows></tbody>
@@ -193,7 +194,7 @@
 
   .chrva-schedule__table {
     border-collapse: collapse;
-    min-width: 980px;
+    min-width: 1120px;
     width: 100%;
   }
 
@@ -359,6 +360,42 @@
     transform: translateY(1px);
   }
 
+  .chrva-schedule__registrations-link {
+    align-items: center;
+    background: var(--chrva-blue);
+    border: 1px solid var(--chrva-blue);
+    border-radius: 8px;
+    box-shadow: 0 2px 0 #0f3857, 0 5px 12px rgba(23, 32, 51, 0.16);
+    color: #fff !important;
+    display: inline-flex;
+    font-size: 13px;
+    font-weight: 800;
+    justify-content: center;
+    line-height: 1.2;
+    min-height: 36px;
+    padding: 8px 11px;
+    text-align: center;
+    text-decoration: none !important;
+    transition: background 0.15s ease, box-shadow 0.15s ease, transform 0.15s ease;
+    white-space: nowrap;
+  }
+
+  .chrva-schedule__registrations-link:hover {
+    background: #0f4267;
+    box-shadow: 0 3px 0 #0f3857, 0 7px 16px rgba(23, 32, 51, 0.2);
+    transform: translateY(-1px);
+  }
+
+  .chrva-schedule__registrations-link:active {
+    box-shadow: 0 1px 0 #0f3857, 0 2px 6px rgba(23, 32, 51, 0.14);
+    transform: translateY(1px);
+  }
+
+  .chrva-schedule__registrations-link:focus-visible {
+    outline: 3px solid rgba(23, 79, 120, 0.3);
+    outline-offset: 2px;
+  }
+
   .chrva-schedule__bulk-actions button:active {
     box-shadow: 0 1px 0 #b9c4d3, 0 2px 6px rgba(23, 32, 51, 0.12);
     transform: translateY(1px);
@@ -492,6 +529,14 @@
       margin-bottom: 2px;
       text-transform: uppercase;
     }
+
+    .chrva-schedule__card-registrations {
+      margin-top: 12px;
+    }
+
+    .chrva-schedule__card-registrations .chrva-schedule__registrations-link {
+      width: 100%;
+    }
   }
 
   @media (max-width: 440px) {
@@ -555,6 +600,7 @@
 
     var monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
     var monthLabels = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+    var currentRegistrationsUrl = "https://www.chrva.org/current-registrations";
     var monthIndex = {};
     monthNames.forEach(function (name, index) { monthIndex[name.toLowerCase()] = index; });
 
@@ -607,6 +653,44 @@
       var match = dateText.match(/\b(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*\s+(\d{1,2})/i);
       if (!match) return new Date(year, 0, 1).getTime();
       return new Date(year, monthIndex[match[1].slice(0, 3).toLowerCase()], Number(match[2])).getTime();
+    }
+
+    function eventDateIso(dateText, year) {
+      var match = dateText.match(/\b(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*\s+(\d{1,2})/i);
+      if (!match) return year + "-01-01";
+      var month = monthIndex[match[1].slice(0, 3).toLowerCase()] + 1;
+      var day = Number(match[2]);
+      return year + "-" + String(month).padStart(2, "0") + "-" + String(day).padStart(2, "0");
+    }
+
+    function slug(value) {
+      return String(value || "")
+        .normalize("NFKD")
+        .replace(/[\u0300-\u036f]/g, "")
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, "-")
+        .replace(/^-+|-+$/g, "");
+    }
+
+    function registrationId(dateText, year, name, format) {
+      return eventDateIso(dateText, year) + "-" + slug(name) + "-" + slug(format);
+    }
+
+    function registrationFormats(item) {
+      if (item.categories.indexOf("revco") !== -1) return ["RevCo 4s"];
+      var formats = [];
+      if (item.categories.indexOf("men") !== -1) formats.push("Mens");
+      if (item.categories.indexOf("women") !== -1) formats.push("Womens");
+      return formats.length ? formats : ["Mens", "Womens"];
+    }
+
+    function registrationsLinks(item) {
+      return registrationFormats(item).map(function (format) {
+        var id = registrationId(item.date, item.year, item.name, format);
+        var href = currentRegistrationsUrl + "?event=" + encodeURIComponent(id);
+        var label = format === "RevCo 4s" ? "View teams" : format + " teams";
+        return "<a class=\"chrva-schedule__registrations-link\" href=\"" + escapeHtml(href) + "\" aria-label=\"View current registrations for " + escapeHtml(item.name + " — " + format) + "\">" + escapeHtml(label) + "</a>";
+      }).join("");
     }
 
     function eventEndDateValue(dateText, year) {
@@ -797,7 +881,7 @@
     }
 
     function monthTableHeader(group, collapsed) {
-      return "<tr class=\"chrva-schedule__month-row\"><td colspan=\"8\">" +
+      return "<tr class=\"chrva-schedule__month-row\"><td colspan=\"9\">" +
         "<button type=\"button\" class=\"chrva-schedule__month-toggle\" data-month-toggle=\"" + escapeHtml(group.id) + "\" aria-expanded=\"" + (!collapsed) + "\">" +
         "<span><span class=\"chrva-schedule__month-title\">" + escapeHtml(group.label) + "</span> " +
         "<span class=\"chrva-schedule__month-summary\">" + group.items.length + " event" + (group.items.length === 1 ? "" : "s") + "</span></span>" +
@@ -827,6 +911,7 @@
         "<td>" + escapeHtml(item.location) + "</td>" +
         "<td>" + escapeHtml(item.registerBy || "TBD") + "</td>" +
         "<td><div class=\"chrva-schedule__links\">" + item.links + "</div></td>" +
+        "<td><div class=\"chrva-schedule__links\">" + registrationsLinks(item) + "</div></td>" +
         "</tr>";
     }
 
@@ -839,7 +924,8 @@
         "<div class=\"chrva-schedule__card-field\"><span>Cost</span>" + escapeHtml(money(item.cost)) + "</div>" +
         "<div class=\"chrva-schedule__card-field\"><span>Register By</span>" + escapeHtml(item.registerBy || "TBD") + "</div>" +
         "<div class=\"chrva-schedule__card-field\"><span>Host</span>" + escapeHtml(item.host) + "</div>" +
-        "</div><div class=\"chrva-schedule__card-field chrva-schedule__card-field--links\"><span>To Register</span><div class=\"chrva-schedule__links\">" + item.links + "</div></div></article>";
+        "</div><div class=\"chrva-schedule__card-field chrva-schedule__card-field--links\"><span>To Register</span><div class=\"chrva-schedule__links\">" + item.links + "</div></div>" +
+        "<div class=\"chrva-schedule__card-registrations\">" + registrationsLinks(item) + "</div></article>";
     }
 
     function specialAnnouncement(item) {
