@@ -1,0 +1,442 @@
+<section class="chrva-registrations" data-current-registrations>
+  <div class="chrva-registrations__status" data-status role="status" aria-live="polite">
+    <span class="chrva-registrations__spinner" aria-hidden="true"></span>
+    <span>Loading current registrations…</span>
+  </div>
+  <div data-content hidden></div>
+</section>
+
+<style>
+  .chrva-registrations {
+    --chrva-red: #a0001e;
+    --chrva-blue: #0052a5;
+    --chrva-ink: #17212b;
+    --chrva-muted: #5d6975;
+    --chrva-border: #d8e0e8;
+    --chrva-surface: #f5f8fb;
+    color: var(--chrva-ink);
+    font-family: Arial, Helvetica, sans-serif;
+    margin: 0 auto;
+    max-width: 1100px;
+  }
+
+  .chrva-registrations *,
+  .chrva-registrations *::before,
+  .chrva-registrations *::after {
+    box-sizing: border-box;
+  }
+
+  .chrva-registrations__status {
+    align-items: center;
+    color: var(--chrva-blue);
+    display: flex;
+    font-weight: 700;
+    gap: 0.65rem;
+    justify-content: center;
+    min-height: 6rem;
+    padding: 1rem;
+    text-align: center;
+  }
+
+  .chrva-registrations__status.is-error {
+    color: var(--chrva-red);
+  }
+
+  .chrva-registrations__spinner {
+    animation: chrva-registrations-spin 0.9s linear infinite;
+    border: 4px solid #dce7f2;
+    border-radius: 50%;
+    border-top-color: var(--chrva-blue);
+    height: 2rem;
+    width: 2rem;
+  }
+
+  @keyframes chrva-registrations-spin {
+    to { transform: rotate(360deg); }
+  }
+
+  .chrva-registrations__list {
+    display: grid;
+    gap: 0.8rem;
+  }
+
+  .chrva-registrations__event {
+    background: #fff;
+    border: 1px solid var(--chrva-border);
+    border-radius: 0.55rem;
+    box-shadow: 0 2px 8px rgba(23, 33, 43, 0.07);
+    overflow: hidden;
+  }
+
+  .chrva-registrations__event-summary {
+    align-items: center;
+    cursor: pointer;
+    display: grid;
+    gap: 0.35rem 1rem;
+    grid-template-columns: minmax(0, 1fr) auto;
+    list-style: none;
+    padding: 1rem 3.25rem 1rem 1rem;
+    position: relative;
+  }
+
+  .chrva-registrations__event-summary::-webkit-details-marker {
+    display: none;
+  }
+
+  .chrva-registrations__event-summary::after {
+    color: var(--chrva-blue);
+    content: "+";
+    font-size: 1.65rem;
+    font-weight: 700;
+    line-height: 1;
+    position: absolute;
+    right: 1rem;
+    top: 50%;
+    transform: translateY(-50%);
+  }
+
+  .chrva-registrations__event[open] > .chrva-registrations__event-summary::after {
+    content: "−";
+  }
+
+  .chrva-registrations__event-summary:hover {
+    background: var(--chrva-surface);
+  }
+
+  .chrva-registrations__event-summary:focus-visible,
+  .chrva-registrations__clear:focus-visible {
+    outline: 3px solid rgba(0, 82, 165, 0.35);
+    outline-offset: 2px;
+  }
+
+  .chrva-registrations__event-name {
+    color: var(--chrva-red);
+    font-size: 1.1rem;
+    font-weight: 700;
+  }
+
+  .chrva-registrations__event-meta,
+  .chrva-registrations__count {
+    color: var(--chrva-muted);
+    font-size: 0.92rem;
+  }
+
+  .chrva-registrations__count {
+    grid-column: 2;
+    grid-row: 1 / span 2;
+    text-align: right;
+    white-space: nowrap;
+  }
+
+  .chrva-registrations__event-body {
+    border-top: 1px solid var(--chrva-border);
+    padding: 1rem;
+  }
+
+  .chrva-registrations__cards {
+    display: grid;
+    gap: 1rem;
+    grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+  }
+
+  .chrva-registrations__card {
+    background: var(--chrva-surface);
+    border-left: 4px solid var(--chrva-blue);
+    border-radius: 0.35rem;
+    padding: 0.9rem 1rem;
+  }
+
+  .chrva-registrations__card-heading {
+    align-items: center;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    justify-content: space-between;
+    margin: 0;
+  }
+
+  .chrva-registrations__team-name {
+    font-size: 1rem;
+    font-weight: 700;
+  }
+
+  .chrva-registrations__badge {
+    background: #fff0c7;
+    border: 1px solid #d49c00;
+    border-radius: 999px;
+    color: #6b4d00;
+    font-size: 0.75rem;
+    font-weight: 700;
+    padding: 0.2rem 0.5rem;
+    text-transform: uppercase;
+  }
+
+  .chrva-registrations__roster-label {
+    color: var(--chrva-muted);
+    font-size: 0.8rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    margin: 0.85rem 0 0.35rem;
+    text-transform: uppercase;
+  }
+
+  .chrva-registrations__roster {
+    margin: 0;
+    padding-left: 1.25rem;
+  }
+
+  .chrva-registrations__roster li + li {
+    margin-top: 0.2rem;
+  }
+
+  .chrva-registrations__empty {
+    background: var(--chrva-surface);
+    border-left: 4px solid var(--chrva-blue);
+    margin: 0;
+    padding: 0.85rem 1rem;
+  }
+
+  .chrva-registrations__filtered-header {
+    border-bottom: 3px solid var(--chrva-red);
+    margin-bottom: 1rem;
+    padding-bottom: 0.8rem;
+  }
+
+  .chrva-registrations__filtered-title {
+    color: var(--chrva-red);
+    font-size: 1.45rem;
+    margin: 0 0 0.3rem;
+  }
+
+  .chrva-registrations__filtered-meta {
+    color: var(--chrva-muted);
+    margin: 0;
+  }
+
+  .chrva-registrations__clear {
+    color: var(--chrva-blue);
+    display: inline-block;
+    font-weight: 700;
+    margin-top: 0.75rem;
+  }
+
+  @media (max-width: 600px) {
+    .chrva-registrations__event-summary {
+      display: block;
+      padding-right: 3rem;
+    }
+
+    .chrva-registrations__event-meta,
+    .chrva-registrations__count {
+      display: block;
+      margin-top: 0.35rem;
+      text-align: left;
+      white-space: normal;
+    }
+
+    .chrva-registrations__cards {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .chrva-registrations__spinner {
+      animation: none;
+    }
+  }
+</style>
+
+<script>
+  (function () {
+    "use strict";
+
+    var API_URL = "https://chrva-proxy.vercel.app/api/current-registrations";
+    var root = document.querySelector("[data-current-registrations]");
+    if (!root) return;
+
+    var statusEl = root.querySelector("[data-status]");
+    var contentEl = root.querySelector("[data-content]");
+
+    function element(tagName, className, text) {
+      var node = document.createElement(tagName);
+      if (className) node.className = className;
+      if (text !== undefined) node.textContent = text;
+      return node;
+    }
+
+    function pluralize(value, singular, plural) {
+      return value + " " + (value === 1 ? singular : plural);
+    }
+
+    function countsFor(tournament) {
+      var registrations = Array.isArray(tournament.registrations) ? tournament.registrations : [];
+      var registered = registrations.filter(function (registration) {
+        return registration.status === "registered";
+      }).length;
+      var waitlisted = registrations.filter(function (registration) {
+        return registration.status === "waitlisted";
+      }).length;
+      return { registered: registered, waitlisted: waitlisted };
+    }
+
+    function countText(tournament) {
+      var counts = countsFor(tournament);
+      var text = pluralize(counts.registered, "team", "teams");
+      if (counts.waitlisted) {
+        text += " · " + pluralize(counts.waitlisted, "waitlisted", "waitlisted");
+      }
+      return text;
+    }
+
+    function formatDate(isoDate) {
+      var parts = String(isoDate || "").split("-").map(Number);
+      if (parts.length !== 3 || parts.some(function (part) { return !Number.isFinite(part); })) {
+        return String(isoDate || "");
+      }
+      return new Intl.DateTimeFormat("en-US", {
+        month: "long",
+        day: "numeric",
+        year: "numeric",
+        timeZone: "America/New_York"
+      }).format(new Date(Date.UTC(parts[0], parts[1] - 1, parts[2], 12)));
+    }
+
+    function sortedRegistrations(tournament) {
+      return (Array.isArray(tournament.registrations) ? tournament.registrations.slice() : [])
+        .sort(function (left, right) {
+          return String(left.teamName || "").localeCompare(String(right.teamName || ""), "en", {
+            sensitivity: "base"
+          });
+        });
+    }
+
+    function renderCards(tournament) {
+      var registrations = sortedRegistrations(tournament);
+      if (!registrations.length) {
+        return element("p", "chrva-registrations__empty", "No teams are currently signed up.");
+      }
+
+      var cards = element("div", "chrva-registrations__cards");
+      registrations.forEach(function (registration) {
+        var card = element("article", "chrva-registrations__card");
+        var heading = element("h3", "chrva-registrations__card-heading");
+        heading.appendChild(element("span", "chrva-registrations__team-name", registration.teamName || "Unnamed team"));
+
+        if (registration.status === "waitlisted") {
+          heading.appendChild(element("span", "chrva-registrations__badge", "Waitlisted"));
+        }
+        card.appendChild(heading);
+
+        var roster = Array.isArray(registration.roster) ? registration.roster : [];
+        if (roster.length) {
+          card.appendChild(element("p", "chrva-registrations__roster-label", "Roster"));
+          var list = element("ul", "chrva-registrations__roster");
+          roster.forEach(function (player) {
+            list.appendChild(element("li", "", player));
+          });
+          card.appendChild(list);
+        }
+        cards.appendChild(card);
+      });
+      return cards;
+    }
+
+    function tournamentMeta(tournament) {
+      return formatDate(tournament.date) + " · " + tournament.division;
+    }
+
+    function renderTournamentDetails(tournament) {
+      var details = element("details", "chrva-registrations__event");
+      var summary = element("summary", "chrva-registrations__event-summary");
+      summary.appendChild(element("span", "chrva-registrations__event-name", tournament.name));
+      summary.appendChild(element("span", "chrva-registrations__event-meta", tournamentMeta(tournament)));
+      summary.appendChild(element("span", "chrva-registrations__count", countText(tournament)));
+      details.appendChild(summary);
+
+      var body = element("div", "chrva-registrations__event-body");
+      body.appendChild(renderCards(tournament));
+      details.appendChild(body);
+      return details;
+    }
+
+    function clearFilterUrl() {
+      var url = new URL(window.location.href);
+      url.searchParams.delete("event");
+      return url.toString();
+    }
+
+    function renderFiltered(tournament) {
+      var header = element("div", "chrva-registrations__filtered-header");
+      header.appendChild(element("h2", "chrva-registrations__filtered-title", tournament.name));
+      header.appendChild(element("p", "chrva-registrations__filtered-meta", tournamentMeta(tournament) + " · " + countText(tournament)));
+      var clearLink = element("a", "chrva-registrations__clear", "View all current tournaments");
+      clearLink.href = clearFilterUrl();
+      header.appendChild(clearLink);
+      contentEl.appendChild(header);
+      contentEl.appendChild(renderCards(tournament));
+    }
+
+    function renderUnavailable() {
+      var message = element("div", "chrva-registrations__empty");
+      message.appendChild(element("strong", "", "This tournament is not available."));
+      var link = element("a", "chrva-registrations__clear", "View current tournaments");
+      link.href = clearFilterUrl();
+      message.appendChild(document.createElement("br"));
+      message.appendChild(link);
+      contentEl.appendChild(message);
+    }
+
+    function showContent() {
+      statusEl.hidden = true;
+      contentEl.hidden = false;
+    }
+
+    function showFailure(message) {
+      statusEl.classList.add("is-error");
+      statusEl.replaceChildren(element("span", "", message));
+      contentEl.hidden = true;
+    }
+
+    fetch(API_URL, { credentials: "omit" })
+      .then(function (response) {
+        if (!response.ok) throw new Error("Request failed with status " + response.status);
+        return response.json();
+      })
+      .then(function (payload) {
+        if (!payload || !Array.isArray(payload.tournaments)) {
+          throw new Error("Invalid response format");
+        }
+
+        var tournaments = payload.tournaments.slice().sort(function (left, right) {
+          return String(left.date || "").localeCompare(String(right.date || "")) ||
+            String(left.name || "").localeCompare(String(right.name || ""), "en", { sensitivity: "base" });
+        });
+        var eventId = new URLSearchParams(window.location.search).get("event");
+
+        if (eventId) {
+          var selected = tournaments.find(function (tournament) { return tournament.id === eventId; });
+          if (selected) renderFiltered(selected);
+          else renderUnavailable();
+          showContent();
+          return;
+        }
+
+        if (!tournaments.length) {
+          contentEl.appendChild(element("p", "chrva-registrations__empty", "No current tournament registrations are available."));
+          showContent();
+          return;
+        }
+
+        var list = element("div", "chrva-registrations__list");
+        tournaments.forEach(function (tournament) {
+          list.appendChild(renderTournamentDetails(tournament));
+        });
+        contentEl.appendChild(list);
+        showContent();
+      })
+      .catch(function (error) {
+        console.error("Unable to load current registrations:", error);
+        showFailure("Current registrations could not be loaded. Please try again later.");
+      });
+  })();
+</script>

@@ -17,6 +17,10 @@
       "destination": "/api/free-agent.js"
     },
     {
+      "source": "/api/current-registrations",
+      "destination": "/api/current-registrations.py"
+    },
+    {
       "source": "/api/roster",
       "destination": "/api/roster.py"
     },
