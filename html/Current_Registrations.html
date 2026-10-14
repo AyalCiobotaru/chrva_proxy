@@ -196,14 +196,29 @@
   }
 
   .chrva-registrations__badge {
-    background: #fff0c7;
-    border: 1px solid #d49c00;
     border-radius: 999px;
-    color: #6b4d00;
     font-size: 0.75rem;
     font-weight: 700;
     padding: 0.2rem 0.5rem;
     text-transform: uppercase;
+  }
+
+  .chrva-registrations__badge--a-aa {
+    background: #d9efdc;
+    border: 1px solid #4e9b5b;
+    color: #145923;
+  }
+
+  .chrva-registrations__badge--b-bb {
+    background: #ffe6bf;
+    border: 1px solid #d88926;
+    color: #7a3705;
+  }
+
+  .chrva-registrations__badge--waitlisted {
+    background: #fff0c7;
+    border: 1px solid #d49c00;
+    color: #6b4d00;
   }
 
   .chrva-registrations__roster-label {
@@ -363,10 +378,11 @@
         var card = element("article", "chrva-registrations__card");
         var heading = element("h3", "chrva-registrations__card-heading");
         heading.appendChild(element("span", "chrva-registrations__team-name", registration.teamName || "Unnamed team"));
-        heading.appendChild(element("span", "chrva-registrations__badge", registration.division));
+        var divisionClass = registration.division === "B/BB" ? "chrva-registrations__badge--b-bb" : "chrva-registrations__badge--a-aa";
+        heading.appendChild(element("span", "chrva-registrations__badge " + divisionClass, registration.division));
 
         if (registration.status === "waitlisted") {
-          heading.appendChild(element("span", "chrva-registrations__badge", "Waitlisted"));
+          heading.appendChild(element("span", "chrva-registrations__badge chrva-registrations__badge--waitlisted", "Waitlisted"));
         }
         card.appendChild(heading);
 
