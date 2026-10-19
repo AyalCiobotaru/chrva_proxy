@@ -111,6 +111,40 @@ Expected tabs and column headers:
 | Players | Full Name, Id, Jersey, Team |
 | Staff | Full Name, Id, Title, Team |
 
+## Current Registrations
+
+`/api/current-registrations` reads a separate private Google Sheet and returns
+the public current-registration data used by `html/Current_Registrations.html`.
+
+Set these Vercel environment variables:
+
+- `REGISTRATIONS_SHEET_ID` - the ID of the current-registrations spreadsheet
+- `GOOGLE_SERVICE_ACCOUNT_JSON` - the existing service-account credential JSON
+- `REGISTRATIONS_DEV_ORIGIN` - optional browser origin for local development
+
+Share the spreadsheet as a viewer with the service account's `client_email`.
+The production endpoint allows browser requests from `https://www.chrva.org`.
+
+The spreadsheet requires these exact tabs and headers:
+
+| Tab | Columns |
+| --- | --- |
+| Tournaments | tournament_id, tournament_name, tournament_date, division, published |
+| Registrations | team_name, tournament_id, roster, status, published, updated_at |
+
+Use real date cells for `tournament_date`, checkbox cells for both `published`
+columns, and a dropdown containing `registered`, `waitlisted`, and `withdrawn`
+for `status`. Put one player name per line in each `roster` cell.
+
+To maintain `updated_at`, copy
+`lib/current-registrations-apps-script.js` into the spreadsheet's
+**Extensions > Apps Script** editor and save it. Its simple `onEdit` trigger
+runs automatically for manual edits on the `Registrations` tab.
+
+Successful endpoint responses are cached at the CDN for five minutes. The
+endpoint returns only published, current tournaments and published
+registrations whose status is `registered` or `waitlisted`.
+
 ## Optional Enhancements
 - **Organization Restriction**: Uncomment the organization check in `chrva.js` to ensure only CHRVA org users can access.
 - **Caching Sheet Data**: Add a cache layer (e.g., in-memory for 5 minutes) to reduce Google Apps Script requests.
