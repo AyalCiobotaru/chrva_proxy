@@ -54,6 +54,10 @@ def normalize_name(raw: str) -> str:
     parts = [p for p in s.split() if p]
     return " ".join(sorted(parts))
 
+def split_names(raw: str) -> List[str]:
+    """Split comma- or line-break-separated names, omitting blank entries."""
+    return [name.strip() for name in re.split(r"[,\r\n]+", str(raw or "")) if name.strip()]
+
 
 def _build_player_index(records: List[Dict[str, Any]]) -> Dict[str, Dict[str, Any]]:
     """
@@ -189,7 +193,7 @@ def add_borrowed_players(field_values: Dict[str, Any], ws_players: gspread.Works
     Append borrowed players to borrowed_x_ fields.
     If not found, include name with blank id/jersey.
     """
-    names = [n.strip() for n in (borrowed_csv or "").split(",") if n.strip()]
+    names = split_names(borrowed_csv)
     if not names:
         return
 
@@ -272,6 +276,10 @@ def build_field_values_for_one_day(
     roster_label: str,
     names_csv: str,
     borrowed_csv: Optional[str] = None,
+    division: str = "",
+    season: str = "",
+    team_contact: str = "",
+    club: str = "",
 ) -> Dict[str, Any]:
     """
     One-day mode:
@@ -285,15 +293,15 @@ def build_field_values_for_one_day(
     sh = client.open_by_key(SHEET_ID)
     ws_players = sh.worksheet(PLAYERS_TAB)
 
-    names = [n.strip() for n in (names_csv or "").split(",") if n.strip()]
+    names = split_names(names_csv)
     players = get_players_by_names(ws_players, names)
 
     field_values: Dict[str, Any] = {
         "team_name": roster_label or "One-Day Team",
-        "division": "",
-        "season": "",
-        "club": "",
-        "team_contact": "",
+        "division": str(division or "").strip(),
+        "season": str(season or "").strip(),
+        "club": str(club or "").strip(),
+        "team_contact": str(team_contact or "").strip(),
     }
 
     # Date

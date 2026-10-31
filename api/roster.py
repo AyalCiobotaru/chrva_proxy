@@ -48,6 +48,10 @@ class handler(BaseHTTPRequestHandler):
                     roster_label=team_name,
                     names_csv=players_csv,
                     borrowed_csv=data.get("borrowed"),
+                    division=data.get("division"),
+                    season=data.get("season"),
+                    team_contact=data.get("team_contact"),
+                    club=data.get("club"),
                 )
 
             else:

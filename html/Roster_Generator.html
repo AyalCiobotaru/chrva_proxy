@@ -59,14 +59,14 @@
       display: block;
     ">
       <option value="team" selected>Team roster (from Teams + Players + Staff tabs)</option>
-      <option value="one-day">One-Day roster (manual player list)</option>
+      <option value="one-day">Manual roster(s)</option>
     </select>
 
     <!-- TEAM MODE -->
     <div id="rg_team_section" style="margin-top:14px;">
       <label style="display:block; font-weight:700; color:#0f2a44; margin-bottom:6px;">Team Name(s)</label>
-      <input id="rg_team_name" type="text" placeholder="e.g. Dat Ace Doe, Tips & Guac, Spyke X Family"
-        style="width:100%; padding:10px; border:1px solid #cfd8e3; border-radius:8px;" />
+      <textarea id="rg_team_name" placeholder="Enter team names separated by commas or line breaks"
+        style="width:100%; min-height:76px; padding:10px; border:1px solid #cfd8e3; border-radius:8px;"></textarea>
 
       <!-- Team picker (loads from Teams tab) -->
       <div style="margin-top:10px; padding:10px; border:1px solid #e3e8ef; border-radius:10px; background:#fafcff;">
@@ -102,14 +102,9 @@
         <div id="rg_selected_count" style="margin-top:8px; color:#445b76; font-size:0.92em;"></div>
       </div>
 
-      <!-- ZIP toggle (used when multiple teams are entered) -->
-      <label style="display:flex; gap:10px; align-items:center; margin-top:10px; color:#0f2a44;">
-        <input type="checkbox" id="rg_zip" checked />
-        Download as a single ZIP when multiple teams are entered
-      </label>
 
       <label style="display:block; font-weight:700; color:#0f2a44; margin:12px 0 6px;">Borrowed Players (optional)</label>
-      <textarea id="rg_borrowed" placeholder="Comma-separated names, e.g. John Doe, Jane Smith"
+      <textarea id="rg_borrowed" placeholder="Names separated by commas or line breaks"
         style="width:100%; min-height:90px; padding:10px; border:1px solid #cfd8e3; border-radius:8px;"></textarea>
 
       <div style="margin-top:8px; font-size:0.92em; color:#445b76;">
@@ -119,17 +114,9 @@
 
     <!-- ONE-DAY MODE -->
     <div id="rg_oneday_section" style="display:none; margin-top:14px;">
-      <label style="display:block; font-weight:700; color:#0f2a44; margin-bottom:6px;">One-Day Team Name</label>
-      <input id="rg_oneday_name" type="text" placeholder="e.g. Frostbite Fill-Ins"
-        style="width:100%; padding:10px; border:1px solid #cfd8e3; border-radius:8px;" />
-
-      <label style="display:block; font-weight:700; color:#0f2a44; margin:12px 0 6px;">Players (comma-separated)</label>
-      <textarea id="rg_oneday_players" placeholder="e.g. John Doe, Jane Smith, Ciobotaru, Ayal"
-        style="width:100%; min-height:110px; padding:10px; border:1px solid #cfd8e3; border-radius:8px;"></textarea>
-
-      <div style="margin-top:8px; font-size:0.92em; color:#445b76;">
-        Note: Borrowed Players input is in Team mode. If you want it here too, I can duplicate/move it.
-      </div>
+      <p style="margin:0; color:#445b76;">Add each team below. Player names can be separated by commas or line breaks.</p>
+      <div id="rg_oneday_teams"></div>
+      <button type="button" id="rg_add_oneday" style="margin-top:12px;">+ Add another team</button>
     </div>
 
     <button id="rg_generate" style="
@@ -143,7 +130,7 @@
       font-weight: 800;
       font-size: 1.02em;
       cursor: pointer;
-    ">Generate PDF</button>
+    ">Generate PDF(s)</button>
 
     <div style="margin-top:10px; font-size:0.9em; color:#556b85;">
       If the download doesn’t start, your browser may be blocking pop-ups/downloads for this page.
@@ -170,6 +157,45 @@
 #rg_mode option {
   font-size: 16px !important;
 }
+.rg_oneday_team {
+  border: 1px solid #d7e0eb;
+  border-radius: 10px;
+  margin-top: 12px;
+  padding: 14px;
+  background: #fafcff;
+}
+.rg_oneday_team_header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+.rg_oneday_team_title { margin: 0; color: #a0001e; font-size: 1.05em; }
+.rg_remove_team, #rg_add_oneday {
+  border: 1px solid #c5d0dd;
+  border-radius: 8px;
+  background: #fff;
+  color: #0f2a44;
+  cursor: pointer;
+  font-weight: 700;
+  padding: 8px 10px;
+}
+.rg_remove_team:disabled { cursor: not-allowed; opacity: 0.45; }
+.rg_field_grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+.rg_oneday_team label { display: block; color: #0f2a44; font-weight: 700; margin-top: 10px; }
+.rg_oneday_team input, .rg_oneday_team select, .rg_oneday_team textarea {
+  width: 100%;
+  box-sizing: border-box;
+  border: 1px solid #cfd8e3;
+  border-radius: 8px;
+  font: inherit;
+  margin-top: 6px;
+  padding: 10px;
+}
+.rg_oneday_team select { min-height: 44px; background: #fff; }
+.rg_oneday_team textarea { min-height: 90px; resize: vertical; }
+@media (max-width: 620px) { .rg_field_grid { grid-template-columns: 1fr; } }
 </style>
 
 <script>
@@ -186,10 +212,9 @@
   const teamNameEl = document.getElementById("rg_team_name");
   const borrowedEl = document.getElementById("rg_borrowed");
 
-  const onedayNameEl = document.getElementById("rg_oneday_name");
-  const onedayPlayersEl = document.getElementById("rg_oneday_players");
+  const onedayTeamsEl = document.getElementById("rg_oneday_teams");
+  const addOneDayBtn = document.getElementById("rg_add_oneday");
 
-  const zipEl = document.getElementById("rg_zip");
 
   const btn = document.getElementById("rg_generate");
   const loading = document.getElementById("rg_loading");
@@ -233,10 +258,10 @@
 
   function parseTeams(raw) {
     return (raw || "")
-      .split(",")
+      .split(/[,\r\n]+/)
       .map(s => s.trim())
       .filter(Boolean)
-      .filter((v, i, arr) => arr.indexOf(v) === i);
+      .filter((value, index, values) => values.findIndex(item => item.toLowerCase() === value.toLowerCase()) === index);
   }
 
   // Toggle sections by mode
@@ -353,9 +378,88 @@
       return;
     }
 
-    teamNameEl.value = teams.join(", ");
+    teamNameEl.value = teams.join("\n");
     showMsg(`<strong>Selected ${teams.length} team(s).</strong> Now click Generate PDF (ZIP recommended).`);
   });
+
+  // ====== REPEATABLE MANUAL TEAM FORMS ======
+  function currentSeason() {
+    const now = new Date();
+    const startYear = now.getMonth() >= 6 ? now.getFullYear() : now.getFullYear() - 1;
+    return `${startYear}-${startYear + 1}`;
+  }
+
+  function renumberManualTeams() {
+    const forms = onedayTeamsEl.querySelectorAll(".rg_oneday_team");
+    forms.forEach((form, index) => {
+      form.querySelector(".rg_oneday_team_title").textContent = `Team ${index + 1}`;
+      form.querySelector(".rg_remove_team").disabled = forms.length === 1;
+    });
+  }
+
+  function addManualTeam() {
+    const form = document.createElement("section");
+    form.className = "rg_oneday_team";
+    form.innerHTML = `
+      <div class="rg_oneday_team_header">
+        <h3 class="rg_oneday_team_title">Team</h3>
+        <button type="button" class="rg_remove_team">Remove</button>
+      </div>
+      <div class="rg_field_grid">
+        <label>Team Name<input class="rg_manual_name" type="text" placeholder="e.g. Frostbite Fill-Ins" required></label>
+        <label>Team Contact<input class="rg_manual_contact" type="text" placeholder="Name, email, or phone" required></label>
+        <label>Division<select class="rg_manual_division"><option value="A/AA">A/AA</option><option value="B/BB">B/BB</option></select></label>
+        <label>Season<input class="rg_manual_season" type="text" value="${currentSeason()}" placeholder="e.g. 2026-2027" required></label>
+      </div>
+      <label>Players<textarea class="rg_manual_players" placeholder="Enter names separated by commas or line breaks" required></textarea></label>
+      <label>Borrowed Players (optional)<textarea class="rg_manual_borrowed" placeholder="Enter names separated by commas or line breaks"></textarea></label>
+    `;
+    onedayTeamsEl.appendChild(form);
+    renumberManualTeams();
+  }
+
+  function collectManualTeams() {
+    const forms = Array.from(onedayTeamsEl.querySelectorAll(".rg_oneday_team"));
+    const teams = [];
+    for (let index = 0; index < forms.length; index += 1) {
+      const form = forms[index];
+      const team = {
+        team_name: form.querySelector(".rg_manual_name").value.trim(),
+        team_contact: form.querySelector(".rg_manual_contact").value.trim(),
+        division: form.querySelector(".rg_manual_division").value,
+        season: form.querySelector(".rg_manual_season").value.trim(),
+        players: form.querySelector(".rg_manual_players").value.trim(),
+        borrowed: form.querySelector(".rg_manual_borrowed").value.trim(),
+      };
+      if (!team.team_name) {
+        showMsg(`<strong>Team ${index + 1} needs a Team Name.</strong>`, true);
+        return null;
+      }
+      if (!team.team_contact) {
+        showMsg(`<strong>Team ${index + 1} needs a Team Contact.</strong>`, true);
+        return null;
+      }
+      if (!team.season) {
+        showMsg(`<strong>Team ${index + 1} needs a Season.</strong>`, true);
+        return null;
+      }
+      if (!team.players) {
+        showMsg(`<strong>Team ${index + 1} needs at least one player.</strong>`, true);
+        return null;
+      }
+      teams.push(team);
+    }
+    return teams;
+  }
+
+  addOneDayBtn.addEventListener("click", addManualTeam);
+  onedayTeamsEl.addEventListener("click", event => {
+    const removeButton = event.target.closest(".rg_remove_team");
+    if (!removeButton || removeButton.disabled) return;
+    removeButton.closest(".rg_oneday_team").remove();
+    renumberManualTeams();
+  });
+  addManualTeam();
 
   // ====== GENERATE ======
   btn.addEventListener("click", async () => {
@@ -378,10 +482,9 @@
         return;
       }
 
-      const zipChecked = zipEl ? zipEl.checked : true;
 
-      // Multiple teams + zip enabled => ZIP endpoint
-      if (teams.length > 1 && zipChecked) {
+      // Multiple teams are always returned together as a ZIP.
+      if (teams.length > 1) {
         payload = { mode: "team", team_names: teams };
         if (borrowed) payload.borrowed = borrowed;
 
@@ -389,7 +492,7 @@
         endpoint = ROSTERS_ZIP_ENDPOINT;
 
       } else {
-        // Single team (or zip disabled) => single PDF endpoint
+        // A single team is returned as a PDF.
         payload = { mode: "team", team_name: teams[0] };
         if (borrowed) payload.borrowed = borrowed;
 
@@ -398,23 +501,18 @@
       }
 
     } else {
-      // one-day mode (single PDF only)
-      const oneDayName = (onedayNameEl.value || "").trim() || "One-Day Team";
-      const players = (onedayPlayersEl.value || "").trim();
+      const teams = collectManualTeams();
+      if (!teams) return;
 
-      // Borrowed players input is in Team mode section
-      const borrowed = (borrowedEl.value || "").trim();
-
-      if (!players) {
-        showMsg("<strong>Please enter at least one player name.</strong>", true);
-        return;
+      if (teams.length === 1) {
+        payload = { mode: "one-day", ...teams[0] };
+        displayName = teams[0].team_name;
+        endpoint = ROSTER_ENDPOINT;
+      } else {
+        payload = { mode: "one-day", teams: teams };
+        displayName = "Rosters";
+        endpoint = ROSTERS_ZIP_ENDPOINT;
       }
-
-      payload = { mode: "one-day", team_name: oneDayName, players: players };
-      if (borrowed) payload.borrowed = borrowed;
-
-      displayName = oneDayName;
-      endpoint = ROSTER_ENDPOINT;
     }
 
     setBusy(true);
