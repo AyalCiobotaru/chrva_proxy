@@ -246,6 +246,43 @@
     padding: 0.85rem 1rem;
   }
 
+  .chrva-registrations__past {
+    border-top: 1px solid var(--chrva-border);
+    margin-top: 1.25rem;
+    padding-top: 0.35rem;
+  }
+
+  .chrva-registrations__past-summary {
+    color: var(--chrva-blue);
+    cursor: pointer;
+    font-weight: 700;
+    list-style: none;
+    padding: 0.75rem 2.25rem 0.75rem 0;
+    position: relative;
+  }
+
+  .chrva-registrations__past-summary::-webkit-details-marker {
+    display: none;
+  }
+
+  .chrva-registrations__past-summary::after {
+    content: "+";
+    font-size: 1.35rem;
+    line-height: 1;
+    position: absolute;
+    right: 0.35rem;
+    top: 50%;
+    transform: translateY(-50%);
+  }
+
+  .chrva-registrations__past[open] > .chrva-registrations__past-summary::after {
+    content: "−";
+  }
+
+  .chrva-registrations__past-list {
+    margin-top: 0.35rem;
+  }
+
   .chrva-registrations__filtered-header {
     border-bottom: 3px solid var(--chrva-red);
     margin-bottom: 1rem;
@@ -425,6 +462,31 @@
       return details;
     }
 
+    function renderTournamentList(tournaments, className) {
+      var list = element("div", "chrva-registrations__list" + (className ? " " + className : ""));
+      tournaments.forEach(function (tournament) {
+        list.appendChild(renderTournamentDetails(tournament));
+      });
+      return list;
+    }
+
+    function renderPastTournaments(tournaments) {
+      var past = element("details", "chrva-registrations__past");
+      var summary = element(
+        "summary",
+        "chrva-registrations__past-summary",
+        "Past tournaments (" + tournaments.length + ")"
+      );
+      past.appendChild(summary);
+      past.appendChild(
+        renderTournamentList(
+          tournaments.slice().reverse(),
+          "chrva-registrations__past-list"
+        )
+      );
+      return past;
+    }
+
     function clearFilterUrl() {
       var url = new URL(window.location.href);
       url.searchParams.delete("event");
@@ -508,17 +570,33 @@
           return;
         }
 
-        if (!tournaments.length) {
-          contentEl.appendChild(element("p", "chrva-registrations__empty", "No current tournament registrations are available."));
-          showContent();
-          return;
+        var currentTournaments = tournaments.filter(function (tournament) {
+          return tournament.isPast !== true;
+        });
+        var pastTournaments = tournaments.filter(function (tournament) {
+          return tournament.isPast === true;
+        });
+
+        if (currentTournaments.length) {
+          contentEl.appendChild(
+            renderTournamentList(currentTournaments)
+          );
+        } else {
+          contentEl.appendChild(
+            element(
+              "p",
+              "chrva-registrations__empty",
+              "No current tournament registrations are available."
+            )
+          );
         }
 
-        var list = element("div", "chrva-registrations__list");
-        tournaments.forEach(function (tournament) {
-          list.appendChild(renderTournamentDetails(tournament));
-        });
-        contentEl.appendChild(list);
+        if (pastTournaments.length) {
+          contentEl.appendChild(
+            renderPastTournaments(pastTournaments)
+          );
+        }
+
         showContent();
         })
         .catch(function (error) {

@@ -75,13 +75,12 @@ The endpoint reads both tabs and constructs a fixed public response schema. It d
 Before building the response, the endpoint removes:
 
 - unpublished tournaments;
-- tournaments before the current `America/New_York` calendar date;
 - unpublished registrations;
 - withdrawn registrations;
 - registrations with invalid or missing tournament references;
 - invalid and conflicting records.
 
-A tournament remains visible through its entire `tournament_date` in `America/New_York` and expires the following day. Published tournaments remain in the response when they have zero visible registrations.
+A tournament remains current through its entire `tournament_date` in `America/New_York`. After that date, it remains in the public response with `isPast: true` so the frontend can place it in the collapsed past-tournaments section. Published tournaments remain in the response when they have zero visible registrations.
 
 The endpoint returns only `registered` and `waitlisted` statuses. It canonicalizes status values to lowercase after trimming and case-insensitive validation.
 
@@ -98,7 +97,7 @@ Examples of invalid records include:
 - duplicate team registrations;
 - registrations referencing an unknown tournament.
 
-A missing or malformed required tab, invalid server configuration, or Google Sheets failure causes a generic HTTP `500` response. When there are no current tournaments, the endpoint returns HTTP `200` with an empty `tournaments` array.
+A missing or malformed required tab, invalid server configuration, or Google Sheets failure causes a generic HTTP `500` response. When there are no published tournaments, the endpoint returns HTTP `200` with an empty `tournaments` array.
 
 ### Caching
 
@@ -115,6 +114,7 @@ The response contains no generated or freshness timestamp.
       "id": "2027-11-28-volley-banquet-bash-womens",
       "name": "Volley Banquet Bash",
       "date": "2027-11-28",
+      "isPast": false,
       "format": "Womens",
       "registrations": [
         {
@@ -132,7 +132,7 @@ The response contains no generated or freshness timestamp.
 }
 ```
 
-The endpoint does not accept an event filter. It returns the complete public current dataset. The browser applies the exact event match and display sorting.
+The endpoint does not accept an event filter. It returns the complete published public dataset, including current and past tournaments. The browser applies the exact event match and display sorting.
 
 ## Frontend behavior
 
@@ -141,7 +141,8 @@ Use plain HTML, CSS, and JavaScript without jQuery, DataTables, or another exter
 ### Unfiltered view
 
 - Read the dataset from `/api/current-registrations`.
-- Sort tournaments chronologically by date.
+- Sort current tournaments chronologically by date.
+- Put past tournaments in a collapsed `Past tournaments` section, with the newest past tournament first.
 - Start with every tournament collapsed.
 - Allow several tournaments to remain expanded at once.
 - Show each chip's tournament name, formatted date, format, and counts.
@@ -159,7 +160,8 @@ Use plain HTML, CSS, and JavaScript without jQuery, DataTables, or another exter
 - Show the matching tournament heading, date, format, counts, and registrations.
 - Do not show the tournament picker.
 - Provide a clear-filter link built from the current URL by removing only `event`; preserve the current path and other query parameters.
-- For an unknown, unpublished, or expired ID, show `This tournament is not available` and a link back to the unfiltered view.
+- For an unknown or unpublished ID, show `This tournament is not available` and a link back to the unfiltered view.
+- Allow exact links to published past tournaments.
 - Do not reveal whether an unavailable tournament exists in the private sheet.
 
 ### Registration cards
@@ -183,7 +185,7 @@ Date formatting uses `en-US` and preserves the `America/New_York` calendar date 
 
 ## Accepted limitations
 
-- Multi-day tournaments store only their first date. Because expiration uses that date, a multi-day tournament will disappear after its first day. Proper `start_date` and `end_date` support is deferred.
+- Multi-day tournaments store only their first date. Because current/past classification uses that date, a multi-day tournament moves into the past section after its first day. Proper `start_date` and `end_date` support is deferred.
 - Published tournament IDs have no aliases or redirects.
 - Player entries contain names only.
 - The public page has no authentication, editing, search, or pagination.
@@ -195,7 +197,7 @@ Date formatting uses `en-US` and preserves the `America/New_York` calendar date 
 
 - Valid published tournament with registered and waitlisted teams
 - Published tournament with no registrations
-- Unpublished, expired, and future tournaments
+- Unpublished, past, and future tournaments
 - Published, unpublished, withdrawn, and invalid registrations
 - Missing roster and roster whitespace handling
 - Duplicate tournament IDs and duplicate team registrations
@@ -210,7 +212,7 @@ Date formatting uses `en-US` and preserves the `America/New_York` calendar date 
 
 - Unfiltered collapsed list and independent expansion
 - Exact valid event filter
-- Unknown, unpublished, and expired event IDs
+- Unknown and unpublished event IDs, plus direct links to published past events
 - Clear-filter URL behavior with other query parameters present
 - Registered and waitlisted counts, including singular and zero states
 - Alphabetical team sorting and preserved roster order
@@ -253,7 +255,8 @@ These do not block the completed local implementation:
 | 2026-10-14 | Use exact permanent IDs in the `event` parameter | Avoids ambiguous matching |
 | 2026-10-14 | Filter private and unavailable data at the endpoint | Hidden browser content would still be publicly downloadable |
 | 2026-10-14 | Use the existing service account with a separate sheet ID | Keeps the new sheet private without another Apps Script deployment |
-| 2026-10-14 | Keep events visible through their stored tournament date | Matches the definition of current registrations |
+| 2026-10-14 | Keep events current through their stored tournament date | Matches the definition of current registrations |
+| 2026-11-02 | Keep published past events available in a collapsed history section | Allows visitors to review prior registrations without crowding the current list |
 | 2026-10-14 | Show registered and waitlisted teams | Waitlisted teams remain visible but do not count as registered teams |
 | 2026-10-14 | Use dependency-free tournament chips and team cards | Fits nested roster data without a table library |
 | 2026-10-14 | Defer proper multi-day date support | First version stores and expires by the first tournament date |

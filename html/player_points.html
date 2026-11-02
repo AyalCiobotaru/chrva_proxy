@@ -1,5 +1,5 @@
 <div class="chrva-player-points" data-player-points data-api-url="https://chrva-proxy.vercel.app/api/player-points">
-  <h2>RevCo Standings for 2026-2027 Season - Sample Data</h2>
+  <h2>RevCo Standings for 2026-2027 Season</h2>
 
   <div class="chrva-player-points__controls" aria-label="Standings controls">
     <div class="chrva-player-points__gender" aria-label="Gender standings filters">
@@ -476,7 +476,13 @@
         return response.json();
       })
       .then(function (payload) {
-        allPlayers = normalizePlayers(payload).sort(function (a, b) {
+        allPlayers = normalizePlayers(payload)
+          .filter(function (player) {
+            return String(player.name || "")
+              .trim()
+              .toLowerCase() !== "ayal ciobotaru";
+          })
+          .sort(function (a, b) {
           return Number(b.totalPoints || 0) - Number(a.totalPoints || 0) || String(a.name || "").localeCompare(String(b.name || ""));
         });
 

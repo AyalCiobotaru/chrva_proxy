@@ -1,0 +1,760 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <base target="_top">
+
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      color: #202124;
+      font: 14px Arial, sans-serif;
+    }
+
+    main {
+      padding: 20px 22px 18px;
+    }
+
+    .field {
+      margin-bottom: 14px;
+    }
+
+    .row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+
+    label {
+      display: block;
+      margin-bottom: 5px;
+      font-weight: 600;
+    }
+
+    input,
+    select {
+      width: 100%;
+      height: 36px;
+      padding: 7px 9px;
+      border: 1px solid #dadce0;
+      border-radius: 4px;
+      background: #fff;
+      color: #202124;
+      font: inherit;
+    }
+
+    input:focus,
+    select:focus {
+      border-color: #1a73e8;
+      outline: 1px solid #1a73e8;
+    }
+
+    .hint {
+      margin-top: 5px;
+      color: #5f6368;
+      font-size: 12px;
+    }
+
+    .actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: 8px;
+      margin-top: 18px;
+    }
+
+    button {
+      height: 36px;
+      padding: 0 14px;
+      border: 1px solid #dadce0;
+      border-radius: 4px;
+      background: #fff;
+      font-weight: 600;
+      cursor: pointer;
+    }
+
+    button.primary {
+      border-color: #1a73e8;
+      background: #1a73e8;
+      color: #fff;
+    }
+
+    button.danger {
+      border-color: #c5221f;
+      color: #c5221f;
+    }
+
+    button:disabled {
+      cursor: default;
+      opacity: 0.45;
+    }
+
+    #statusMessage {
+      min-height: 42px;
+      margin-top: 15px;
+      padding: 10px;
+      border-left: 3px solid #dadce0;
+      white-space: pre-wrap;
+      line-height: 1.4;
+    }
+
+    #statusMessage.success {
+      border-color: #188038;
+      background: #f0f8f2;
+    }
+
+    #statusMessage.error {
+      border-color: #c5221f;
+      background: #fce8e6;
+    }
+
+    dialog {
+      width: 470px;
+      max-width: calc(100% - 24px);
+      max-height: 82vh;
+      padding: 0;
+      border: 0;
+      border-radius: 6px;
+      box-shadow:
+        0 8px 28px rgba(60, 64, 67, 0.3);
+    }
+
+    dialog::backdrop {
+      background: rgba(32, 33, 36, 0.45);
+    }
+
+    .dialog-body {
+      padding: 18px 20px;
+      overflow-y: auto;
+      max-height: calc(82vh - 58px);
+    }
+
+    .dialog-title {
+      margin: 0 0 6px;
+      font-size: 18px;
+    }
+
+    .player-row {
+      display: grid;
+      grid-template-columns:
+        105px 1fr 94px;
+      gap: 8px;
+      align-items: start;
+      margin-top: 12px;
+    }
+
+    .player-id {
+      min-height: 36px;
+      padding: 9px 0 0;
+      font-weight: 600;
+    }
+
+    .player-team {
+      color: #5f6368;
+      font-size: 11px;
+      font-weight: 400;
+    }
+
+    .dialog-actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: 8px;
+      padding: 11px 20px;
+      border-top: 1px solid #dadce0;
+    }
+
+    #rosterMessage {
+      margin-top: 12px;
+      color: #5f6368;
+      white-space: pre-wrap;
+    }
+
+    #rosterMessage.error {
+      color: #c5221f;
+    }
+  </style>
+</head>
+
+<body>
+  <main>
+    <form id="importForm">
+      <div class="field">
+        <label for="trackerUrl">
+          Pool tracker Google Sheet
+        </label>
+
+        <input
+          id="trackerUrl"
+          name="trackerUrl"
+          type="url"
+          required
+          placeholder="Paste the tracker URL"
+        >
+      </div>
+
+      <div class="row">
+        <div class="field">
+          <label for="template">
+            Tracker format
+          </label>
+
+          <select
+            id="template"
+            name="template"
+          >
+            <option>3 Teams</option>
+            <option>4 Teams</option>
+            <option>5 Teams</option>
+            <option>6 Teams</option>
+            <option>7 Teams</option>
+            <option selected>
+              8 Teams
+            </option>
+            <option>10 Teams</option>
+            <option>12 Teams</option>
+          </select>
+        </div>
+
+        <div class="field">
+          <label for="season">
+            Season
+          </label>
+
+          <input
+            id="season"
+            name="season"
+            type="number"
+            min="2000"
+            max="2100"
+            required
+            value="<?= defaults.season ?>"
+          >
+        </div>
+      </div>
+
+      <div class="field">
+        <label for="tournamentId">
+          Tournament ID
+        </label>
+
+        <input
+          id="tournamentId"
+          name="tournamentId"
+          required
+          placeholder="Fall-Brawl-Fours"
+        >
+
+        <div class="hint">
+          Stable ID used by the standings and website.
+        </div>
+      </div>
+
+      <div class="field">
+        <label for="name">
+          Tournament name
+        </label>
+
+        <input
+          id="name"
+          name="name"
+          required
+          placeholder="Fall Brawl Fours"
+        >
+      </div>
+
+      <div class="row">
+        <div class="field">
+          <label for="date">
+            Tournament date
+          </label>
+
+          <input
+            id="date"
+            name="date"
+            type="date"
+            required
+            value="<?= defaults.date ?>"
+          >
+        </div>
+
+        <div class="field">
+          <label for="status">
+            Status
+          </label>
+
+          <select
+            id="status"
+            name="status"
+          >
+            <option selected>
+              Executed
+            </option>
+
+            <option>
+              Scheduled
+            </option>
+
+            <option>
+              Cancelled
+            </option>
+          </select>
+        </div>
+      </div>
+
+      <div id="statusMessage">
+        Preview validates the tracker and shows exactly what will be imported.
+      </div>
+
+      <div class="actions">
+        <button
+          type="button"
+          id="preview"
+        >
+          Preview
+        </button>
+
+        <button
+          type="button"
+          id="replace"
+          class="danger"
+          disabled
+        >
+          Replace
+        </button>
+
+        <button
+          type="button"
+          id="import"
+          class="primary"
+          disabled
+        >
+          Import
+        </button>
+      </div>
+    </form>
+
+    <dialog id="rosterDialog">
+      <div class="dialog-body">
+        <h2 class="dialog-title">
+          Add missing roster players
+        </h2>
+
+        <div class="hint">
+          Enter the player details. Saving adds them to the roster database and reruns Preview.
+        </div>
+
+        <form id="rosterForm">
+          <div id="playerFields"></div>
+        </form>
+
+        <div id="rosterMessage"></div>
+      </div>
+
+      <div class="dialog-actions">
+        <button
+          type="button"
+          id="cancelRoster"
+        >
+          Cancel
+        </button>
+
+        <button
+          type="button"
+          id="saveRoster"
+          class="primary"
+        >
+          Save players
+        </button>
+      </div>
+    </dialog>
+  </main>
+
+  <script>
+    const form =
+      document.getElementById(
+        'importForm'
+      );
+
+    const statusBox =
+      document.getElementById(
+        'statusMessage'
+      );
+
+    const previewButton =
+      document.getElementById(
+        'preview'
+      );
+
+    const importButton =
+      document.getElementById(
+        'import'
+      );
+
+    const replaceButton =
+      document.getElementById(
+        'replace'
+      );
+
+    const rosterDialog =
+      document.getElementById(
+        'rosterDialog'
+      );
+
+    const rosterForm =
+      document.getElementById(
+        'rosterForm'
+      );
+
+    const playerFields =
+      document.getElementById(
+        'playerFields'
+      );
+
+    const rosterMessage =
+      document.getElementById(
+        'rosterMessage'
+      );
+
+    const saveRosterButton =
+      document.getElementById(
+        'saveRoster'
+      );
+
+    let previewSignature = '';
+    let missingPlayers = [];
+
+    function values() {
+      return Object.fromEntries(
+        new FormData(form).entries()
+      );
+    }
+
+    function signature() {
+      return JSON.stringify(values());
+    }
+
+    function setBusy(busy) {
+      previewButton.disabled = busy;
+
+      importButton.disabled =
+        busy ||
+        previewSignature !== signature();
+
+      replaceButton.disabled =
+        busy ||
+        previewSignature !== signature();
+    }
+
+    function show(message, kind) {
+      statusBox.textContent = message;
+      statusBox.className = kind || '';
+    }
+
+    function failed(error) {
+      previewSignature = '';
+
+      show(
+        error && error.message
+          ? error.message
+          : String(error),
+        'error'
+      );
+
+      setBusy(false);
+    }
+
+    function preview() {
+      if (!form.reportValidity()) {
+        return;
+      }
+
+      setBusy(true);
+      show('Validating tracker...');
+
+      google.script.run
+        .withSuccessHandler(
+          function(result) {
+            if (
+              result.needsRosterPlayers
+            ) {
+              setBusy(false);
+
+              openRosterDialog(
+                result.missingPlayers
+              );
+
+              return;
+            }
+
+            previewSignature =
+              signature();
+
+            show(
+              result.summary,
+              'success'
+            );
+
+            setBusy(false);
+          }
+        )
+        .withFailureHandler(failed)
+        .previewTournamentFromDialog(
+          values()
+        );
+    }
+
+    function openRosterDialog(players) {
+      missingPlayers = players;
+      playerFields.innerHTML = '';
+      rosterMessage.textContent = '';
+      rosterMessage.className = '';
+
+      players.forEach(
+        function(player, index) {
+          const row =
+            document.createElement('div');
+
+          row.className = 'player-row';
+
+          const idField = player.needsId
+            ? (
+              '<div>' +
+              '<label for="playerId' +
+              index +
+              '">CHRVA ID</label>' +
+              '<input id="playerId' +
+              index +
+              '" data-player-id ' +
+              'inputmode="numeric" ' +
+              'pattern="[0-9]+" required>' +
+              '<div class="player-team">' +
+              escapeHtml(player.teamName) +
+              '</div></div>'
+            )
+            : (
+              '<div class="player-id">' +
+              escapeHtml(player.id) +
+              '<div class="player-team">' +
+              escapeHtml(player.teamName) +
+              '</div></div>'
+            );
+
+          row.innerHTML =
+            idField +
+            '<div>' +
+            '<label for="playerName' +
+            index +
+            '">Full name</label>' +
+            '<input id="playerName' +
+            index +
+            '" data-player-name required value="' +
+            escapeHtml(player.name || '') +
+            '">' +
+            '</div>' +
+            '<div>' +
+            '<label for="playerGender' +
+            index +
+            '">Gender</label>' +
+            '<select id="playerGender' +
+            index +
+            '" data-player-gender required>' +
+            '<option value="">Select</option>' +
+            '<option value="M">Male</option>' +
+            '<option value="F">Female</option>' +
+            '</select>' +
+            '</div>';
+
+          playerFields.appendChild(row);
+        }
+      );
+
+      rosterDialog.showModal();
+    }
+
+    function escapeHtml(value) {
+      const element =
+        document.createElement('div');
+
+      element.textContent =
+        String(value || '');
+
+      return element.innerHTML;
+    }
+
+    function saveRosterPlayers() {
+      if (!rosterForm.reportValidity()) {
+        return;
+      }
+
+      saveRosterButton.disabled = true;
+
+      rosterMessage.textContent =
+        'Saving players...';
+
+      rosterMessage.className = '';
+
+      const names =
+        playerFields.querySelectorAll(
+          '[data-player-name]'
+        );
+
+      const genders =
+        playerFields.querySelectorAll(
+          '[data-player-gender]'
+        );
+
+      const players =
+        missingPlayers.map(
+          function(player, index) {
+            const idInput =
+              playerFields.querySelector(
+                '#playerId' + index
+              );
+
+            return {
+              id: idInput
+                ? idInput.value
+                : player.id,
+              name:
+                names[index].value,
+              gender:
+                genders[index].value,
+              originalName:
+                player.originalName || '',
+              sourceSpreadsheetId:
+                player.sourceSpreadsheetId || '',
+              sourceSheetName:
+                player.sourceSheetName || '',
+              sourceCells:
+                player.sourceCells || [],
+            };
+          }
+        );
+
+      google.script.run
+        .withSuccessHandler(
+          function() {
+            rosterDialog.close();
+
+            saveRosterButton.disabled =
+              false;
+
+            preview();
+          }
+        )
+        .withFailureHandler(
+          function(error) {
+            rosterMessage.textContent =
+              error && error.message
+                ? error.message
+                : String(error);
+
+            rosterMessage.className =
+              'error';
+
+            saveRosterButton.disabled =
+              false;
+          }
+        )
+        .addMissingRosterPlayers(
+          players
+        );
+    }
+
+    function runImport(
+      replaceExisting
+    ) {
+      if (
+        previewSignature !== signature()
+      ) {
+        return;
+      }
+
+      if (
+        replaceExisting &&
+        !confirm(
+          'Replace existing Teams and Results rows for this tournament?'
+        )
+      ) {
+        return;
+      }
+
+      setBusy(true);
+
+      show(
+        replaceExisting
+          ? 'Replacing tournament...'
+          : 'Importing tournament...'
+      );
+
+      google.script.run
+        .withSuccessHandler(
+          function(result) {
+            show(
+              result.summary,
+              'success'
+            );
+
+            previewSignature = '';
+            previewButton.disabled =
+              false;
+
+            importButton.disabled =
+              true;
+
+            replaceButton.disabled =
+              true;
+          }
+        )
+        .withFailureHandler(failed)
+        .importTournamentFromDialog(
+          values(),
+          replaceExisting
+        );
+    }
+
+    form.addEventListener(
+      'input',
+      function() {
+        previewSignature = '';
+        setBusy(false);
+      }
+    );
+
+    previewButton.addEventListener(
+      'click',
+      preview
+    );
+
+    importButton.addEventListener(
+      'click',
+      function() {
+        runImport(false);
+      }
+    );
+
+    replaceButton.addEventListener(
+      'click',
+      function() {
+        runImport(true);
+      }
+    );
+
+    saveRosterButton.addEventListener(
+      'click',
+      saveRosterPlayers
+    );
+
+    document
+      .getElementById('cancelRoster')
+      .addEventListener(
+        'click',
+        function() {
+          rosterDialog.close();
+        }
+      );
+  </script>
+</body>
+</html>

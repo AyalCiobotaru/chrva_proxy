@@ -156,13 +156,11 @@ def build_public_payload(
             warn(f"{TOURNAMENTS_TAB} row {row_number}: invalid tournament_date omitted")
             continue
 
-        if tournament_date < today:
-            continue
-
         valid_tournaments[tournament_id] = {
             "id": tournament_id,
             "name": tournament_name,
             "date": tournament_date.isoformat(),
+            "isPast": tournament_date < today,
             "format": tournament_format,
             # Temporary response alias for the currently embedded page during rollout.
             "division": tournament_format,

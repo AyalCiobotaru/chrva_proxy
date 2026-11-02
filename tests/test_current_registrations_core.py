@@ -53,7 +53,23 @@ class CurrentRegistrationsCoreTests(unittest.TestCase):
             ],
         )
 
-        self.assertEqual([tournament["id"] for tournament in payload["tournaments"]], ["fall-classic", "empty-event"])
+        self.assertEqual(
+            [tournament["id"] for tournament in payload["tournaments"]],
+            ["fall-classic", "past-event", "empty-event"],
+        )
+        self.assertFalse(payload["tournaments"][0]["isPast"])
+        self.assertTrue(payload["tournaments"][1]["isPast"])
+        self.assertEqual(
+            payload["tournaments"][1]["registrations"],
+            [
+                {
+                    "teamName": "Past Team",
+                    "division": "A/AA",
+                    "status": "registered",
+                    "roster": ["Past Player"],
+                }
+            ],
+        )
         self.assertEqual(
             payload["tournaments"][0]["registrations"],
             [
