@@ -33,6 +33,11 @@
       </thead>
       <tbody data-player-rows></tbody>
     </table>
+    <div class="chrva-player-points__pagination" data-pagination hidden>
+      <button type="button" data-page-prev aria-label="Previous page" title="Previous page">&lt;</button>
+      <span data-page-status></span>
+      <button type="button" data-page-next aria-label="Next page" title="Next page">&gt;</button>
+    </div>
     <div class="chrva-player-points__count" data-count></div>
   </div>
 </div>
@@ -268,6 +273,51 @@
     padding: 8px 10px;
   }
 
+  .chrva-player-points__pagination {
+    align-items: center;
+    display: flex;
+    gap: 10px;
+    justify-content: flex-end;
+    margin-top: 8px;
+  }
+
+  .chrva-player-points__pagination button {
+    align-items: center;
+    background: #fff;
+    border: 0;
+    color: var(--chrva-red-dark);
+    cursor: pointer;
+    display: inline-flex;
+    font: inherit;
+    font-size: 16px;
+    font-weight: 800;
+    height: 32px;
+    justify-content: center;
+    padding: 0;
+    width: 32px;
+  }
+
+  .chrva-player-points__pagination button:hover,
+  .chrva-player-points__pagination button:focus {
+    background: var(--chrva-red);
+    color: #fff;
+    outline: 0;
+  }
+
+  .chrva-player-points__pagination button:disabled {
+    background: #eeeeee;
+    color: #777777;
+    cursor: default;
+  }
+
+  .chrva-player-points__pagination span {
+    color: var(--chrva-text);
+    font-size: 12px;
+    font-weight: 700;
+    min-width: 88px;
+    text-align: center;
+  }
+
   .chrva-player-points__count {
     color: var(--chrva-text);
     font-size: 12px;
@@ -297,6 +347,10 @@
     var tableWrap = root.querySelector("[data-table-wrap]");
     var rowsEl = root.querySelector("[data-player-rows]");
     var countEl = root.querySelector("[data-count]");
+    var paginationEl = root.querySelector("[data-pagination]");
+    var pageStatusEl = root.querySelector("[data-page-status]");
+    var prevButton = root.querySelector("[data-page-prev]");
+    var nextButton = root.querySelector("[data-page-next]");
     var searchInput = root.querySelector("[data-player-search]");
     var seasonSelect = root.querySelector("[data-season-filter]");
     var filterButtons = Array.prototype.slice.call(root.querySelectorAll("[data-gender-filter]"));
@@ -305,7 +359,8 @@
     var selectedGender = "M";
     var selectedSeason = seasonSelect ? seasonSelect.value : "2026";
     var searchTerm = "";
-    var maxVisiblePlayers = 10;
+    var playersPerPage = 10;
+    var currentPage = 1;
 
     function escapeHtml(value) {
       return String(value || "")
@@ -410,15 +465,20 @@
       });
     }
 
-    function visiblePlayers() {
-      return filteredPlayers().slice(0, maxVisiblePlayers);
-    }
-
     function render() {
       var matchingPlayers = filteredPlayers();
-      var players = matchingPlayers.slice(0, maxVisiblePlayers);
+      var totalPages = Math.max(1, Math.ceil(matchingPlayers.length / playersPerPage));
+      currentPage = Math.min(currentPage, totalPages);
+      var startIndex = (currentPage - 1) * playersPerPage;
+      var players = matchingPlayers.slice(startIndex, startIndex + playersPerPage);
       rowsEl.innerHTML = players.map(playerRow).join("");
-      countEl.textContent = selectedSeason + " " + genderLabel(selectedGender) + ": showing " + players.length + " of " + matchingPlayers.length + " player" + (matchingPlayers.length === 1 ? "" : "s");
+      var visibleStart = matchingPlayers.length ? startIndex + 1 : 0;
+      var visibleEnd = startIndex + players.length;
+      countEl.textContent = selectedSeason + " " + genderLabel(selectedGender) + ": showing " + visibleStart + "-" + visibleEnd + " of " + matchingPlayers.length + " player" + (matchingPlayers.length === 1 ? "" : "s");
+      if (paginationEl) paginationEl.hidden = matchingPlayers.length <= playersPerPage;
+      if (pageStatusEl) pageStatusEl.textContent = "Page " + currentPage + " of " + totalPages;
+      if (prevButton) prevButton.disabled = currentPage <= 1;
+      if (nextButton) nextButton.disabled = currentPage >= totalPages;
       statusEl.hidden = true;
       tableWrap.hidden = false;
 
@@ -431,6 +491,7 @@
     function setGender(gender) {
       selectedGender = gender;
       expanded = {};
+      currentPage = 1;
       filterButtons.forEach(function (button) {
         var active = button.getAttribute("data-gender-filter") === selectedGender;
         button.classList.toggle("is-active", active);
@@ -444,10 +505,17 @@
       render();
     }
 
+    function setPage(page) {
+      currentPage = page;
+      expanded = {};
+      render();
+    }
+
     if (searchInput) {
       searchInput.addEventListener("input", function () {
         searchTerm = String(searchInput.value || "").trim().toLowerCase();
         expanded = {};
+        currentPage = 1;
         render();
       });
     }
@@ -459,6 +527,18 @@
       });
     });
 
+    if (prevButton) {
+      prevButton.addEventListener("click", function () {
+        if (currentPage > 1) setPage(currentPage - 1);
+      });
+    }
+
+    if (nextButton) {
+      nextButton.addEventListener("click", function () {
+        setPage(currentPage + 1);
+      });
+    }
+
     function standingsUrl() {
       var separator = apiUrl.indexOf("?") === -1 ? "?" : "&";
       return apiUrl + separator + "season=" + encodeURIComponent(selectedSeason);
@@ -469,6 +549,7 @@
       statusEl.textContent = "Loading player points...";
       tableWrap.hidden = true;
       expanded = {};
+      currentPage = 1;
 
       fetch(standingsUrl(), { credentials: "include" })
       .then(function (response) {
@@ -513,6 +594,7 @@
     if (seasonSelect) {
       seasonSelect.addEventListener("change", function () {
         selectedSeason = seasonSelect.value;
+        currentPage = 1;
         loadStandings();
       });
     }

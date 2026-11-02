@@ -35,9 +35,9 @@
       <tbody data-team-rows></tbody>
     </table>
     <div class="chrva-team-points__pagination" data-pagination hidden>
-      <button type="button" data-page-prev>Previous</button>
+      <button type="button" data-page-prev aria-label="Previous page" title="Previous page">&lt;</button>
       <span data-page-status></span>
-      <button type="button" data-page-next>Next</button>
+      <button type="button" data-page-next aria-label="Next page" title="Next page">&gt;</button>
     </div>
     <div class="chrva-team-points__count" data-count></div>
   </div>
@@ -293,16 +293,19 @@
   }
 
   .chrva-team-points__pagination button {
+    align-items: center;
     background: #fff;
-    border: 1px solid var(--chrva-red);
+    border: 0;
     color: var(--chrva-red-dark);
     cursor: pointer;
+    display: inline-flex;
     font: inherit;
-    font-size: 12px;
+    font-size: 16px;
     font-weight: 800;
-    min-height: 32px;
-    padding: 6px 12px;
-    text-transform: uppercase;
+    height: 32px;
+    justify-content: center;
+    padding: 0;
+    width: 32px;
   }
 
   .chrva-team-points__pagination button:hover,
@@ -314,7 +317,6 @@
 
   .chrva-team-points__pagination button:disabled {
     background: #eeeeee;
-    border-color: #c7c7c7;
     color: #777777;
     cursor: default;
   }
