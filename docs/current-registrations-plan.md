@@ -142,7 +142,7 @@ Use plain HTML, CSS, and JavaScript without jQuery, DataTables, or another exter
 
 - Read the dataset from `/api/current-registrations`.
 - Sort current tournaments chronologically by date.
-- Put past tournaments in a collapsed `Past tournaments` section, with the newest past tournament first.
+- Put past tournaments in a collapsed `Past tournaments` section above the current list, with the newest past tournament first.
 - Start with every tournament collapsed.
 - Allow several tournaments to remain expanded at once.
 - Show each chip's tournament name, formatted date, format, and counts.

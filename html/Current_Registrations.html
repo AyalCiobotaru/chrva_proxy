@@ -275,6 +275,13 @@
     transform: translateY(-50%);
   }
 
+  .chrva-registrations__past[open] {
+    background: #f1f3f5;
+    border-radius: 0.45rem;
+    margin-bottom: 1.25rem;
+    padding: 0.35rem 0.75rem 0.75rem;
+  }
+
   .chrva-registrations__past[open] > .chrva-registrations__past-summary::after {
     content: "−";
   }
@@ -298,6 +305,18 @@
   .chrva-registrations__filtered-meta {
     color: var(--chrva-muted);
     margin: 0;
+  }
+
+  .chrva-registrations__combined-section + .chrva-registrations__combined-section {
+    border-top: 1px solid var(--chrva-border);
+    margin-top: 1.5rem;
+    padding-top: 1.5rem;
+  }
+
+  .chrva-registrations__combined-heading {
+    color: var(--chrva-red);
+    font-size: 1.1rem;
+    margin: 0 0 0.75rem;
   }
 
   .chrva-registrations__clear {
@@ -493,15 +512,61 @@
       return url.toString();
     }
 
-    function renderFiltered(tournament) {
+    function matchingTournaments(tournaments, eventId) {
+      var selected = tournaments.find(function (tournament) {
+        return tournament.id === eventId;
+      });
+
+      if (selected) {
+        if (selected.format !== "Mens" && selected.format !== "Womens") {
+          return [selected];
+        }
+        return tournaments.filter(function (tournament) {
+          return tournament.name === selected.name &&
+            (tournament.format === "Mens" || tournament.format === "Womens");
+        });
+      }
+
+      var requestedName = String(eventId || "").trim().toLocaleLowerCase("en");
+      return tournaments.filter(function (tournament) {
+        return String(tournament.name || "").trim().toLocaleLowerCase("en") === requestedName;
+      });
+    }
+
+    function renderFiltered(tournaments) {
+      var primary = tournaments[0];
+      var combined = tournaments.length > 1;
+      var combinedTournament = {
+        registrations: tournaments.reduce(function (registrations, tournament) {
+          return registrations.concat(Array.isArray(tournament.registrations) ? tournament.registrations : []);
+        }, [])
+      };
       var header = element("div", "chrva-registrations__filtered-header");
-      header.appendChild(element("h2", "chrva-registrations__filtered-title", tournament.name));
-      header.appendChild(element("p", "chrva-registrations__filtered-meta", tournamentMeta(tournament) + " · " + countText(tournament)));
+      header.appendChild(element("h2", "chrva-registrations__filtered-title", primary.name));
+      header.appendChild(element(
+        "p",
+        "chrva-registrations__filtered-meta",
+        (combined ? "Mens & Womens" : tournamentMeta(primary)) + " · " + countText(combinedTournament)
+      ));
       var clearLink = element("a", "chrva-registrations__clear", "View all current tournaments");
       clearLink.href = clearFilterUrl();
       header.appendChild(clearLink);
       contentEl.appendChild(header);
-      contentEl.appendChild(renderCards(tournament));
+
+      tournaments.forEach(function (tournament) {
+        if (!combined) {
+          contentEl.appendChild(renderCards(tournament));
+          return;
+        }
+        var section = element("section", "chrva-registrations__combined-section");
+        section.appendChild(element(
+          "h3",
+          "chrva-registrations__combined-heading",
+          tournamentMeta(tournament) + " · " + countText(tournament)
+        ));
+        section.appendChild(renderCards(tournament));
+        contentEl.appendChild(section);
+      });
     }
 
     function renderUnavailable() {
@@ -563,8 +628,8 @@
         var eventId = new URLSearchParams(window.location.search).get("event");
 
         if (eventId) {
-          var selected = tournaments.find(function (tournament) { return tournament.id === eventId; });
-          if (selected) renderFiltered(selected);
+          var selected = matchingTournaments(tournaments, eventId);
+          if (selected.length) renderFiltered(selected);
           else renderUnavailable();
           showContent();
           return;
@@ -577,6 +642,12 @@
           return tournament.isPast === true;
         });
 
+        if (pastTournaments.length) {
+          contentEl.appendChild(
+            renderPastTournaments(pastTournaments)
+          );
+        }
+
         if (currentTournaments.length) {
           contentEl.appendChild(
             renderTournamentList(currentTournaments)
@@ -588,12 +659,6 @@
               "chrva-registrations__empty",
               "No current tournament registrations are available."
             )
-          );
-        }
-
-        if (pastTournaments.length) {
-          contentEl.appendChild(
-            renderPastTournaments(pastTournaments)
           );
         }
 
